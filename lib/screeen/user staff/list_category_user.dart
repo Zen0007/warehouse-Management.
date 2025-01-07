@@ -42,7 +42,7 @@ class ListCategoryUser extends StatelessWidget {
               backgroundColor: Theme.of(context).colorScheme.surface,
             ),
             icon: Icon(
-              Icons.library_books_sharp,
+              Icons.bookmark,
             ),
           ),
           SizedBox(
