@@ -160,7 +160,7 @@ class CardItem extends StatelessWidget {
                       backgroundColor: Theme.of(context).colorScheme.secondary,
                     ),
                     icon: Icon(
-                      Icons.add,
+                      Icons.bookmark_add_outlined,
                     ),
                   ),
                 ],
@@ -168,50 +168,6 @@ class CardItem extends StatelessWidget {
             )
         ],
       ),
-    );
-  }
-
-// only for test so not use
-  Column columnOne(BuildContext context) {
-    return Column(
-      children: [
-        CircleAvatar(
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          radius: 50,
-          child: const CircleAvatar(
-            backgroundImage: AssetImage("assets/data/black_bull.jpeg"),
-            radius: 40,
-          ), //CircleAvatar
-        ), //CircleAvatar
-        const SizedBox(
-          height: 10,
-        ), //SizedBox
-        Text(
-          'name : ${data.name}',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onPrimary,
-            fontWeight: FontWeight.w500,
-          ), //Textstyle
-        ), //Text
-        const SizedBox(
-          height: 10,
-        ), //SizedBox
-        Text(
-          "label : ${data.label}",
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onPrimary,
-          ), //Textstyle
-        ), //Text
-        const SizedBox(
-          height: 10,
-        ), //SizedBox
-        Text(
-          "status : ${data.status}",
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onPrimary,
-          ), //Textstyle
-        ),
-      ],
     );
   }
 }
