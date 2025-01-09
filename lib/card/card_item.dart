@@ -64,8 +64,8 @@ class CardItem extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: Image.asset(
-                "assets/data/black_bull.jpeg",
+              child: Image.memory(
+                data.image,
                 height: imageSize * 0.65,
                 width: imageSize * 0.8,
                 fit: BoxFit.cover,
@@ -92,7 +92,7 @@ class CardItem extends StatelessWidget {
                 data.name,
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w400,
                 ),
               )
             ],
