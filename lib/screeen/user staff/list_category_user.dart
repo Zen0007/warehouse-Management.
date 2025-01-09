@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werehouse_inventory/screeen/user%20staff/category_user.dart';
 import 'package:werehouse_inventory/screeen/user staff/category_grid_item.dart';
+import 'package:werehouse_inventory/screeen/user%20staff/list_staff_user.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class ListCategoryUser extends StatelessWidget {
@@ -37,7 +38,12 @@ class ListCategoryUser extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ListStaffUser(),
+              ),
+            ),
             style: TextButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.surface,
             ),
