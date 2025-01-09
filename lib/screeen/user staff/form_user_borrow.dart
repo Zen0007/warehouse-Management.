@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_picker_for_web/image_picker_for_web.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:werehouse_inventory/screeen/user_has_borrow.dart';
 import 'package:werehouse_inventory/shered_data_to_root/shared_preferences.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
@@ -133,7 +134,12 @@ class _FormForUserState extends State<FormForUser> {
             style: TextButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.secondary,
             ),
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => UserHasBorrow(),
+              ),
+            ),
             child: Text(
               "Yes",
               style: TextStyle(
