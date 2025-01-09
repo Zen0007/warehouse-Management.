@@ -1,9 +1,9 @@
-import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_picker_for_web/image_picker_for_web.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:werehouse_inventory/shered_data_to_root/shared_preferences.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
@@ -53,8 +53,6 @@ class _FormForUserState extends State<FormForUser> {
 
   void sumbit(BuildContext context, WebsocketHelper wsHelper) async {
     final validate = _fromKey.currentState!.validate();
-    final listChoiceUser =
-        await StoredUserChoice().getListFromSharedPreferences();
 
     if (!validate) return;
     _fromKey.currentState!.save();
@@ -69,8 +67,9 @@ class _FormForUserState extends State<FormForUser> {
         alertIfImageNull("wajib melampirkan selfie");
         return;
       }
-      final decode = json.encode(image);
-
+      final listChoiceUser =
+          await StoredUserChoice().getListFromSharedPreferences();
+      print("$listChoiceUser ---------------------------");
       wsHelper.sendMessage(
         {
           "endpoint": "borrowing",
@@ -80,8 +79,8 @@ class _FormForUserState extends State<FormForUser> {
             "nisn": nisn,
             "teacher": nameGuru,
             "time": "${DateTime.now()}",
-            "iteme": listChoiceUser,
-            "imageSelfie": decode,
+            "imageSelfie": image,
+            "items": listChoiceUser,
           },
         },
       );
@@ -98,7 +97,10 @@ class _FormForUserState extends State<FormForUser> {
           } else if (data.containsKey('message')) {
             if (!context.mounted) return;
             final message = data['message'];
-            message(context, message);
+            final prefs = await SharedPreferences.getInstance();
+            prefs.setString('hasBorrow', name);
+            if (!context.mounted) return;
+            messages(context, message);
           }
         }
       }
@@ -107,22 +109,22 @@ class _FormForUserState extends State<FormForUser> {
     }
   }
 
-  Future<dynamic> message(BuildContext context, message) {
+  Future<dynamic> messages(BuildContext context, message) {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog.adaptive(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
         title: Text(
           'MESSAGE',
           style: TextStyle(
-            color: Theme.of(context).colorScheme.onSecondary,
+            color: Theme.of(context).colorScheme.onPrimary,
             fontWeight: FontWeight.w500,
           ),
         ),
         content: Text(
           "$message",
           style: TextStyle(
-            color: Theme.of(context).colorScheme.onSecondary,
+            color: Theme.of(context).colorScheme.onPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -135,7 +137,7 @@ class _FormForUserState extends State<FormForUser> {
             child: Text(
               "Yes",
               style: TextStyle(
-                color: Theme.of(context).colorScheme.onError,
+                color: Theme.of(context).colorScheme.onPrimary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -229,23 +231,23 @@ class _FormForUserState extends State<FormForUser> {
 
   void clearImage() {
     setState(() {
-      print('d');
       image = null;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: LayoutBuilder(builder: (context, constraints) {
         debugPrint("${constraints.maxWidth}");
 
-        if (constraints.maxWidth < 800) {
+        if (constraints.maxWidth < 700) {
           return mobile(context, constraints);
         } else {
           return desktop(context, constraints);
         }
-      },
+      }),
     );
   }
 
@@ -356,6 +358,9 @@ class _FormForUserState extends State<FormForUser> {
                     return null;
                   },
                   onSaved: (newValue) => name = newValue ?? "",
+                ), // sizeBox
+                SizedBox(
+                  height: constraints.maxWidth * 0.03,
                 ),
                 TextFormField(
                   decoration: InputDecoration(
@@ -384,6 +389,9 @@ class _FormForUserState extends State<FormForUser> {
                     return null;
                   },
                   onSaved: (newValue) => kelas = newValue ?? "",
+                ), // sizeBox
+                SizedBox(
+                  height: constraints.maxWidth * 0.03,
                 ),
                 TextFormField(
                   decoration: InputDecoration(
@@ -412,6 +420,9 @@ class _FormForUserState extends State<FormForUser> {
                     return null;
                   },
                   onSaved: (newValue) => nisn = newValue ?? "",
+                ), // sizeBox
+                SizedBox(
+                  height: constraints.maxWidth * 0.03,
                 ),
                 TextFormField(
                   decoration: InputDecoration(
@@ -450,8 +461,7 @@ class _FormForUserState extends State<FormForUser> {
             padding: EdgeInsets.only(
               right: constraints.maxWidth * 0.3,
               left: constraints.maxWidth * 0.3,
-              top: constraints.maxWidth * 0.1,
-              bottom: 20,
+              top: constraints.maxWidth * 0.08,
             ),
             child: ElevatedButton(
               onPressed: () {},
@@ -470,31 +480,53 @@ class _FormForUserState extends State<FormForUser> {
             ),
           ),
         if (!isLoding)
-          Container(
-            padding: EdgeInsets.only(
-              right: constraints.maxWidth * 0.3,
-              left: constraints.maxWidth * 0.3,
-              top: constraints.maxWidth * 0.1,
-              bottom: 20,
-            ),
-            child: Consumer<WebsocketHelper>(
-              builder: (contex, wsHelper, child) {
-                return ElevatedButton(
-                  onPressed: () => sumbit(context, wsHelper),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Container(
+                padding: EdgeInsets.only(
+                    top: constraints.maxWidth * 0.08,
+                    bottom: constraints.maxWidth * 0.1),
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.secondary,
                   ),
                   child: Center(
                     child: Text(
-                      "Add Admin",
+                      "cencel",
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onPrimary,
                       ),
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.only(
+                    top: constraints.maxWidth * 0.08,
+                    bottom: constraints.maxWidth * 0.1),
+                child: Consumer<WebsocketHelper>(
+                  builder: (contex, wsHelper, child) {
+                    return ElevatedButton(
+                      onPressed: () => sumbit(context, wsHelper),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            Theme.of(context).colorScheme.secondary,
+                      ),
+                      child: Center(
+                        child: Text(
+                          "sumbit",
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
       ],
     );
@@ -511,7 +543,7 @@ class _FormForUserState extends State<FormForUser> {
               top: constraints.maxWidth * 0.01,
               bottom: 10,
             ),
-            height: constraints.maxWidth * 0.2,
+            height: constraints.maxWidth * 0.25,
             decoration: BoxDecoration(
               boxShadow: [
                 BoxShadow(
@@ -540,7 +572,7 @@ class _FormForUserState extends State<FormForUser> {
               top: constraints.maxWidth * 0.01,
               bottom: 10,
             ),
-            height: constraints.maxWidth * 0.2,
+            height: constraints.maxWidth * 0.25,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
             ),
@@ -575,37 +607,133 @@ class _FormForUserState extends State<FormForUser> {
             right: constraints.maxWidth * 0.1,
             left: constraints.maxWidth * 0.1,
             top: constraints.maxWidth * 0.05,
+            bottom: constraints.maxWidth * 0.005,
           ),
-          child: Form(
-            key: _fromKey,
-            child: TextFormField(
-              decoration: InputDecoration(
-                hintText: " new category",
-                counterStyle: const TextStyle(
-                  backgroundColor: Colors.black,
+          child: Column(
+            children: [
+              TextFormField(
+                decoration: InputDecoration(
+                  hintText: " nama",
+                  counterStyle: const TextStyle(
+                    backgroundColor: Colors.black,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  fillColor: Theme.of(context).colorScheme.secondary,
+                  filled: true,
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Icon(Icons.add),
+                  ),
                 ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
-                fillColor: Theme.of(context).colorScheme.secondary,
-                filled: true,
-                prefixIcon: const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Icon(Icons.add),
-                ),
+                keyboardType: TextInputType.name,
+                autocorrect: true,
+                textCapitalization: TextCapitalization.none,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter a valid name';
+                  }
+                  return null;
+                },
+                onSaved: (newValue) => name = newValue ?? "",
               ),
-              keyboardType: TextInputType.name,
-              autocorrect: true,
-              textCapitalization: TextCapitalization.none,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter a valid name';
-                }
-                return null;
-              },
-              onSaved: (newValue) => name = newValue ?? '',
-            ),
+              // sizeBox
+              SizedBox(
+                height: constraints.maxWidth * 0.03,
+              ),
+              TextFormField(
+                decoration: InputDecoration(
+                  hintText: " kelas",
+                  counterStyle: const TextStyle(
+                    backgroundColor: Colors.black,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  fillColor: Theme.of(context).colorScheme.secondary,
+                  filled: true,
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Icon(Icons.add),
+                  ),
+                ),
+                keyboardType: TextInputType.name,
+                autocorrect: true,
+                textCapitalization: TextCapitalization.none,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter a valid name';
+                  }
+                  return null;
+                },
+                onSaved: (newValue) => kelas = newValue ?? "",
+              ),
+              SizedBox(
+                height: constraints.maxWidth * 0.03,
+              ),
+              TextFormField(
+                decoration: InputDecoration(
+                  hintText: " nisn",
+                  counterStyle: const TextStyle(
+                    backgroundColor: Colors.black,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  fillColor: Theme.of(context).colorScheme.secondary,
+                  filled: true,
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Icon(Icons.add),
+                  ),
+                ),
+                keyboardType: TextInputType.name,
+                autocorrect: true,
+                textCapitalization: TextCapitalization.none,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter a valid name';
+                  }
+                  return null;
+                },
+                onSaved: (newValue) => nisn = newValue ?? "",
+              ),
+              SizedBox(
+                height: constraints.maxWidth * 0.03,
+              ),
+              TextFormField(
+                decoration: InputDecoration(
+                  hintText: " nama guru",
+                  counterStyle: const TextStyle(
+                    backgroundColor: Colors.black,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  fillColor: Theme.of(context).colorScheme.secondary,
+                  filled: true,
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Icon(Icons.add),
+                  ),
+                ),
+                keyboardType: TextInputType.name,
+                autocorrect: true,
+                textCapitalization: TextCapitalization.none,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter a valid name';
+                  }
+                  return null;
+                },
+                onSaved: (newValue) => nameGuru = newValue ?? "",
+              ),
+            ],
           ),
         ),
         if (isLoding)
@@ -614,7 +742,6 @@ class _FormForUserState extends State<FormForUser> {
               right: constraints.maxWidth * 0.15,
               left: constraints.maxWidth * 0.15,
               top: constraints.maxWidth * 0.3,
-              bottom: 20,
             ),
             child: ElevatedButton(
               onPressed: () {},
@@ -633,31 +760,55 @@ class _FormForUserState extends State<FormForUser> {
             ),
           ),
         if (!isLoding)
-          Container(
-            padding: EdgeInsets.only(
-              right: constraints.maxWidth * 0.15,
-              left: constraints.maxWidth * 0.15,
-              top: constraints.maxWidth * 0.3,
-              bottom: 20,
-            ),
-            child: Consumer<WebsocketHelper>(
-              builder: (contex, wsHelper, child) {
-                return ElevatedButton(
-                  onPressed: () => sumbit(context, wsHelper),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Container(
+                padding: EdgeInsets.only(
+                  top: constraints.maxWidth * 0.25,
+                  bottom: constraints.maxWidth * 0.05,
+                ),
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.secondary,
                   ),
                   child: Center(
                     child: Text(
-                      "Add Admin",
+                      "cencel",
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onPrimary,
                       ),
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.only(
+                  top: constraints.maxWidth * 0.25,
+                  bottom: constraints.maxWidth * 0.05,
+                ),
+                child: Consumer<WebsocketHelper>(
+                  builder: (contex, wsHelper, child) {
+                    return ElevatedButton(
+                      onPressed: () => sumbit(context, wsHelper),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            Theme.of(context).colorScheme.secondary,
+                      ),
+                      child: Center(
+                        child: Text(
+                          "sumbit",
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
       ],
     );
