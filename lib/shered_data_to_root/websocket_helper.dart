@@ -46,6 +46,7 @@ class WebsocketHelper with ChangeNotifier {
         notifyListeners();
 
         streamController.sink.add(streamData);
+        print(streamData);
       },
       onDone: () {
         print("losset connect web socket");
@@ -80,8 +81,8 @@ class WebsocketHelper with ChangeNotifier {
             now.subtract(Duration(hours: 1)).toIso8601String(),
       );
 
-      debugPrint("$getToken token t");
-      debugPrint("${prefs.getString('lastRequest')} exp");
+      debugPrint("$getToken token wsHelper");
+      debugPrint("${prefs.getString('lastRequest')} exp wsHelper");
 
       if (now.difference(lastRequest).inHours >= 1) {
         _channel.sink.add(json.encode(
@@ -118,6 +119,40 @@ class WebsocketHelper with ChangeNotifier {
       await for (final status in streamController.stream) {
         if (status['endpoint'] == "VERIFIKASI") {
           yield status['status'];
+        }
+      }
+    } catch (e) {
+      debugPrint("$e error in verifikasi");
+    }
+  }
+
+  Stream<List<BorrowUser>> checkUserHasBorrow() async* {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final getToken = prefs.getString('token');
+
+    try {
+      _channel.sink.add(json.encode(
+        {
+          "endpoint": "checkUserBorrow",
+          "data": {
+            "token": getToken,
+          }
+        },
+      ));
+      final List<BorrowUser> list = [];
+
+      await for (final status in streamController.stream) {
+        if (status['endpoint'] == "CHECKUSER") {
+          for (var i = 0; i < status['message'].length; i++) {
+            final Map dataMessage = status['message'][i];
+            for (var data in dataMessage.values) {
+              if (data is Map) {
+                final user = BorrowUser.from(data);
+                list.add(user);
+              }
+            }
+            yield list;
+          }
         }
       }
     } catch (e) {
@@ -165,7 +200,7 @@ class WebsocketHelper with ChangeNotifier {
             }
           }
         }
-        print(list);
+
         yield list;
       }
     }
@@ -245,7 +280,6 @@ class WebsocketHelper with ChangeNotifier {
 
         for (var i = 0; i < index['message'].length; i++) {
           if (index['message'][i][title] != null) {
-            print("is empty");
             for (var entry in index['message'][i][title].entries) {
               final index = Index.fromJson(entry.value, entry.key, title);
               data.add(index);
