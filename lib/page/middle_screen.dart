@@ -60,8 +60,6 @@ class _MiddleScreenState extends State<MiddleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    print(size);
     return Scaffold(
       key: drawer,
       appBar: AppBar(
@@ -262,7 +260,7 @@ class _MiddleScreenState extends State<MiddleScreen> {
                   left: constraints.maxWidth * 0.02,
                   top: constraints.maxHeight * 0.35,
                   child: Container(
-                    width: size.width * 0.33,
+                    width: constraints.maxWidth * 0.33,
                     height: constraints.maxWidth * 0.15,
                     color: Theme.of(context).colorScheme.secondary,
                   ),
@@ -270,14 +268,14 @@ class _MiddleScreenState extends State<MiddleScreen> {
               ],
             );
           } else {
-            return dekstop(context, size, constraints);
+            return dekstop(context, constraints);
           }
         },
       ),
     );
   }
 
-  Stack dekstop(BuildContext context, Size size, BoxConstraints constraints) {
+  Stack dekstop(BuildContext context, BoxConstraints constraints) {
     return Stack(
       children: [
         Row(
@@ -303,19 +301,19 @@ class _MiddleScreenState extends State<MiddleScreen> {
           ],
         ),
         Positioned(
-          left: size.width * 0.45,
+          left: constraints.maxWidth * 0.45,
           top: constraints.maxHeight * 0.1,
           child: Container(
-            width: size.width * 0.5,
+            width: constraints.maxWidth * 0.5,
             height: constraints.maxWidth * 0.35,
-            color: Theme.of(context).colorScheme.primary,
+            color: Colors.blue,
           ),
         ),
         Positioned(
           left: constraints.maxWidth * 0.05,
           top: constraints.maxHeight * 0.25,
           child: Container(
-            width: size.width * 0.35,
+            width: constraints.maxWidth * 0.35,
             height: constraints.maxWidth * 0.15,
             color: Theme.of(context).colorScheme.primary,
           ),
