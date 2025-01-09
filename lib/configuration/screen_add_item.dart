@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -88,7 +87,7 @@ class _AddItemState extends State<AddItem> {
         alertIfImageNull('category must add');
         return;
       }
-      final decode = json.encode(image);
+
       wsHelper.sendMessage(
         {
           "endpoint": "newItem",
@@ -96,7 +95,7 @@ class _AddItemState extends State<AddItem> {
             "category": valueDropDown,
             "name": name,
             "label": label,
-            "image": decode,
+            "image": image,
           },
         },
       );
@@ -120,7 +119,6 @@ class _AddItemState extends State<AddItem> {
 
   void clearImage() {
     setState(() {
-      print('d');
       image = null;
     });
   }
