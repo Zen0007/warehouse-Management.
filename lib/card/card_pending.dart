@@ -33,8 +33,8 @@ class CardPending extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: Image.asset(
-                "assets/data/black_bull.jpeg",
+              child: Image.memory(
+                data.imageUser,
                 height: imageSize * 0.65,
                 width: imageSize * 0.8,
                 fit: BoxFit.cover,
