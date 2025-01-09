@@ -23,7 +23,7 @@ class App extends StatelessWidget {
           return StreamBuilder(
             stream: wsHelper.verifikasi(),
             builder: (context, snapshot) {
-              print('${snapshot.data} status');
+              // print('${snapshot.data} status');
               /*
                check if token user is valide else is token invalide and nothing return
               */
