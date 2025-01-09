@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 class CategoryList {
   final String key;
   final String id;
@@ -55,19 +57,23 @@ class Index {
   String status;
   String label;
   String name;
-  String image;
+  Uint8List image;
   String index;
   String category;
 
   factory Index.fromJson(
-          Map<String, dynamic> json, String index, String category) =>
-      Index(
-          name: json['nameItem'],
-          status: json['status'],
-          label: json['label'],
-          image: json['image'],
-          index: index,
-          category: category);
+      Map<String, dynamic> jsons, String index, String category) {
+    final List<int> listInt = List<int>.from(jsons['image'] as List);
+    final Uint8List intList = Uint8List.fromList(listInt);
+    return Index(
+        name: jsons['name'],
+        status: jsons['status'],
+        label: jsons['Label'],
+        image: intList,
+        index: index,
+        category: category);
+  }
+
   Map<String, dynamic> toJson() => {
         "status": status,
         "nameItem": name,
@@ -104,8 +110,8 @@ class BorrowUser {
   final String? classUser;
   final String? nameTeacher;
   final String? nisn;
-  final String? imageUser;
-  final String? imageNisn;
+  final Uint8List imageUser;
+  final Uint8List? imageNisn;
   final String? status;
   final List<Item> item;
 
@@ -114,7 +120,7 @@ class BorrowUser {
     this.classUser,
     this.nameTeacher,
     this.nisn,
-    this.imageUser,
+    required this.imageUser,
     this.imageNisn,
     this.status,
     required this.item,
@@ -131,13 +137,14 @@ class BorrowUser {
       );
       item.add(index);
     }
-
+    final List<int> listInt = List<int>.from(json['imageSelfie'] as List);
+    final Uint8List intList = Uint8List.fromList(listInt);
     return BorrowUser(
       nameUser: json['name'],
       classUser: json['class'],
       nameTeacher: json['nameTeacher'],
       nisn: json['nisn'],
-      imageUser: json['imageSelfie'],
+      imageUser: intList,
       imageNisn: json['imageStudenCard'],
       status: json['status'],
       item: item,
