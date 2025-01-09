@@ -87,7 +87,7 @@ class _ListStaffUserState extends State<ListStaffUser> {
                                 "${snapShot.data![index]['index']}",
                                 style: TextStyle(
                                   color:
-                                      Theme.of(context).colorScheme.onPrimary,
+                                      Theme.of(context).colorScheme.onSecondary,
                                   fontSize: constraints.maxWidth * 0.035,
                                 ),
                               ),
@@ -100,20 +100,20 @@ class _ListStaffUserState extends State<ListStaffUser> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                "${snapShot.data![index]['category']}",
+                                "${snapShot.data![index]['nameItem']}",
                                 style: TextStyle(
                                   fontSize: constraints.maxWidth * 0.03,
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                               SizedBox(
                                 height: constraints.maxWidth * 0.01,
                               ),
                               Text(
-                                "${snapShot.data![index]['name']}",
+                                "${snapShot.data![index]['category']}",
                                 style: TextStyle(
-                                  fontSize: constraints.maxWidth * 0.025,
-                                  fontWeight: FontWeight.w700,
+                                  fontSize: constraints.maxWidth * 0.02,
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
                             ],
