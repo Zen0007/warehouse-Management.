@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:werehouse_inventory/auth/login.dart';
-import 'package:werehouse_inventory/fetch_socket.dart/verifikasi.dart';
-import 'package:werehouse_inventory/page/home_page.dart';
-import 'package:werehouse_inventory/screeen/user%20staff/list_category_user.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
+import 'package:werehouse_inventory/screeen/user_stuff/list_category_user.dart';
 
 class MiddleScreen extends StatefulWidget {
   const MiddleScreen({super.key});
@@ -16,47 +13,6 @@ class MiddleScreen extends StatefulWidget {
 
 class _MiddleScreenState extends State<MiddleScreen> {
   final GlobalKey<ScaffoldState> drawer = GlobalKey<ScaffoldState>();
-
-  // this before for cheak token user but not  can use provider
-  void chekToken() async {
-    try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final getToken = prefs.getString('token');
-      debugPrint("$getToken nameUser");
-
-      if (getToken == null) return;
-
-      if (getToken.isNotEmpty) {
-        final stream = verifikasi(getToken);
-        stream.listen(
-          (message) {
-            if (message["endpoint"] == "verikasi") {
-              if (message.containsKey('message')) {
-                debugPrint("middle");
-                if (!mounted) return;
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => HomePage(),
-                  ),
-                );
-                return;
-              } else if (message.containsKey("warning")) {
-                if (!mounted) return;
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => MiddleScreen(),
-                  ),
-                );
-              }
-            }
-          },
-        );
-      }
-    } catch (e, s) {
-      debugPrint("$e");
-      debugPrint('$s');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
