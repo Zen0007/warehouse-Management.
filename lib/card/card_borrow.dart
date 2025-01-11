@@ -36,8 +36,8 @@ class CardBorrow extends StatelessWidget {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: Image.asset(
-                  "assets/data/black_bull.jpeg",
+                child: Image.memory(
+                  data.imageUser,
                   height: imageSize * 0.65,
                   width: imageSize * 0.8,
                   fit: BoxFit.cover,
@@ -81,6 +81,13 @@ class CardBorrow extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      Text(
+                        "nisn",
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -111,6 +118,12 @@ class CardBorrow extends StatelessWidget {
                       ),
                       Text(
                         "${data.nisn}",
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                      ),
+                      Text(
+                        "${data.status}",
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onPrimary,
                         ),
