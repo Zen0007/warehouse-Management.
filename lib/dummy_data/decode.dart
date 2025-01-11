@@ -111,7 +111,7 @@ class BorrowUser {
   final String? nameTeacher;
   final String? nisn;
   final Uint8List imageUser;
-  final Uint8List? imageNisn;
+  final List? imageNisn;
   final String? status;
   final List<Item> item;
 
@@ -127,27 +127,28 @@ class BorrowUser {
   });
 
   factory BorrowUser.from(Map json) {
-    final List<Item> item = [];
+    final List<Item> items = [];
     for (var data in json['items']) {
       final index = Item.from(
         data["category"],
-        data['id'],
+        data['index'],
         data['nameItem'],
         data['label'],
       );
-      item.add(index);
+      items.add(index);
     }
     final List<int> listInt = List<int>.from(json['imageSelfie'] as List);
     final Uint8List intList = Uint8List.fromList(listInt);
+
     return BorrowUser(
       nameUser: json['name'],
       classUser: json['class'],
       nameTeacher: json['nameTeacher'],
       nisn: json['nisn'],
       imageUser: intList,
-      imageNisn: json['imageStudenCard'],
+      imageNisn: json['imageSelfie'],
       status: json['status'],
-      item: item,
+      item: items,
     );
   }
 }
