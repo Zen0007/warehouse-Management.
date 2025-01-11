@@ -6,67 +6,156 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:werehouse_inventory/dummy_data/decode.dart';
 
 class WebsocketHelper with ChangeNotifier {
-  final WebSocketChannel _channel =
-      WebSocketChannel.connect(Uri.parse('ws://127.0.0.1:8080/ws'));
-  final StreamController<Map> streamController =
-      StreamController<Map>.broadcast();
-
-  WebsocketHelper() {
+  WebsocketHelper(this.channel) {
     connect();
   }
 
+  WebSocketChannel? channel;
+  final StreamController<Map> streamController =
+      StreamController<Map>.broadcast();
+  Stream? broadCastStream;
+  Timer? _reconnectTimer;
+  bool isConnected = false;
+  final Duration _reconnectDelay = Duration(seconds: 5);
+
   void getDataBorrow() {
-    _channel.sink.add(json.encode({"endpoint": "getDataBorrow"}));
+    channel?.sink.add(json.encode({"endpoint": "getDataBorrow"}));
+    notifyListeners();
   }
 
   void getDataCategoryUser() {
-    _channel.sink.add(json.encode({"endpoint": "getDataCollectionAvaileble"}));
+    channel?.sink.add(json.encode({"endpoint": "getDataCollectionAvaileble"}));
+    notifyListeners();
   }
 
   void getDataAllCollection() {
-    _channel.sink.add(json.encode({"endpoint": "getDataAllCollection"}));
+    channel?.sink.add(json.encode({"endpoint": "getDataAllCollection"}));
+    notifyListeners();
   }
 
   void getDataPending() {
-    _channel.sink.add(json.encode({"endpoint": "getDataPending"}));
+    channel?.sink.add(json.encode({"endpoint": "getDataPending"}));
+    notifyListeners();
   }
 
   void getAllKeyCategory() {
-    _channel.sink.add(json.encode({"endpoint": "getAllKeyCategory"}));
+    channel?.sink.add(json.encode({"endpoint": "getAllKeyCategory"}));
+    notifyListeners();
   }
 
   void getDataGranted() {
-    _channel.sink.add(json.encode({"endpoint": "getDataGranted"}));
+    channel?.sink.add(json.encode({"endpoint": "getDataGranted"}));
+    notifyListeners();
   }
 
   void connect() async {
-    _channel.stream.listen(
-      (message) {
-        final streamData = json.decode(message);
-        notifyListeners();
+    try {
+      broadCastStream = channel?.stream.asBroadcastStream();
+      broadCastStream?.listen(
+        (message) {
+          final streamData = json.decode(message);
+          notifyListeners();
 
-        streamController.sink.add(streamData);
-        print(streamData);
-      },
-      onDone: () {
-        print("losset connect web socket");
-        reconnet();
-      },
-      onError: (e) {
-        print(e);
-        reconnet();
-      },
-    );
+          streamController.sink.add(streamData);
+          notifyListeners();
+        },
+        onDone: () {
+          print('connection close ');
+
+          isConnected = false;
+          notifyListeners();
+          reconnet();
+        },
+        onError: (e) {
+          print(e);
+
+          isConnected = false;
+          notifyListeners();
+          reconnet();
+        },
+      );
+
+      isConnected = true;
+      notifyListeners();
+    } catch (e, s) {
+      debugPrint("$e");
+      debugPrint("$s");
+
+      isConnected = false;
+      notifyListeners();
+      reconnet();
+    }
+  }
+
+  void closeWebSocket() {
+    if (channel != null) {
+      channel?.sink.close();
+      channel = null; // Clear the WebSocketChannel reference
+      _reconnectTimer?.cancel();
+      _reconnectTimer = null;
+      broadCastStream = null;
+      isConnected = false;
+      notifyListeners();
+    }
   }
 
   void reconnet() async {
-    await Future.delayed(Duration(seconds: 5));
-    connect();
+    closeWebSocket();
+    try {
+      if (_reconnectTimer == null || !_reconnectTimer!.isActive) {
+        _reconnectTimer = Timer(
+          _reconnectDelay,
+          () {
+            print("attempting to reconnect .....");
+            connect();
+          },
+        );
+      }
+    } catch (e) {
+      if (_reconnectTimer == null || !_reconnectTimer!.isActive) {
+        _reconnectTimer = Timer(
+          _reconnectDelay,
+          () {
+            print("attempting to reconnect .....");
+            connect();
+          },
+        );
+      }
+      print(e);
+    }
+  }
+
+  void grantedForReturnItem() async {
+    await for (var data in streamController.stream) {
+      if (data['endpoint'] == "GRANTED") {
+        if (data.containsKey('message')) {
+          final SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.remove('hasBorrow');
+          return;
+        }
+      }
+    }
   }
 
   void sendMessage(Map<String, dynamic> message) {
-    _channel.sink.add(
+    channel?.sink.add(
       json.encode(message),
+    );
+    notifyListeners();
+  }
+
+  void sendRequestReturnItem() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final getToken = prefs.getString('hasBorrow');
+    channel?.sink.add(
+      json.encode(
+        {
+          'endpoint': "waitPermision",
+          'data': {
+            "name": getToken ?? "",
+          }
+        },
+      ),
     );
   }
 
@@ -85,7 +174,7 @@ class WebsocketHelper with ChangeNotifier {
       debugPrint("${prefs.getString('lastRequest')} exp wsHelper");
 
       if (now.difference(lastRequest).inHours >= 1) {
-        _channel.sink.add(json.encode(
+        channel?.sink.add(json.encode(
           {
             "endpoint": "verifikasi",
             "data": {
@@ -106,7 +195,7 @@ class WebsocketHelper with ChangeNotifier {
       Duration delayed = nextRequest.difference(now);
       Timer(
         delayed,
-        () => _channel.sink.add(json.encode(
+        () => channel?.sink.add(json.encode(
           {
             "endpoint": "verifikasi",
             "data": {
@@ -126,37 +215,69 @@ class WebsocketHelper with ChangeNotifier {
     }
   }
 
-  Stream<List<BorrowUser>> checkUserHasBorrow() async* {
+  Stream<BorrowUser> checkUserHasBorrow() async* {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final getToken = prefs.getString('token');
+    final getToken = prefs.getString('hasBorrow');
+
+    // for checker if user hast get granted for return items
+    grantedForReturnItem();
 
     try {
-      _channel.sink.add(json.encode(
-        {
-          "endpoint": "checkUserBorrow",
-          "data": {
-            "token": getToken,
-          }
-        },
-      ));
-      final List<BorrowUser> list = [];
+      DateTime now = DateTime.now();
+      DateTime lastRequest = DateTime.parse(
+        prefs.getString('lastRequest') ??
+            now.subtract(Duration(minutes: 1)).toIso8601String(),
+      );
+
+      if (now.difference(lastRequest).inMinutes >= 1) {
+        channel?.sink.add(json.encode(
+          {
+            "endpoint": "checkUserBorrow",
+            "data": {
+              "name": getToken ?? '',
+            }
+          },
+        ));
+
+        prefs.setString('lastRequest', now.toIso8601String());
+      }
+
+      DateTime nextRequest = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        now.hour,
+        now.minute + 1,
+      );
+      Duration delayed = nextRequest.difference(now);
+      Timer(
+        delayed,
+        () => channel?.sink.add(
+          json.encode(
+            {
+              "endpoint": "checkUserBorrow",
+              "data": {
+                "name": "rizan",
+              }
+            },
+          ),
+        ),
+      );
 
       await for (final status in streamController.stream) {
         if (status['endpoint'] == "CHECKUSER") {
-          for (var i = 0; i < status['message'].length; i++) {
-            final Map dataMessage = status['message'][i];
-            for (var data in dataMessage.values) {
-              if (data is Map) {
-                final user = BorrowUser.from(data);
-                list.add(user);
-              }
+          final Map dataUser = status['message'];
+          for (var data in dataUser.values) {
+            if (data is Map) {
+              final user = BorrowUser.from(data);
+              yield user;
             }
-            yield list;
           }
         }
       }
-    } catch (e) {
-      debugPrint("$e error in verifikasi");
+    } catch (e, s) {
+      print(e);
+      debugPrint("$s strackTrace");
     }
   }
 
@@ -255,18 +376,26 @@ class WebsocketHelper with ChangeNotifier {
   }
 
   Future<List<KeyCategoryList>> keyCategory() async {
-    List<KeyCategoryList> key = [];
+    try {
+      List<KeyCategoryList> key = [];
 
-    await for (var data in streamController.stream) {
-      if (data['endpoint'] == "GETDATAALLKEYCATEGORY") {
-        for (var i = 0; i < data['message'].length; i++) {
-          final keyCategory = KeyCategoryList.fromJson(data['message'][i]);
-          key.add(keyCategory);
+      await for (var data in streamController.stream) {
+        if (data['endpoint'] == "GETDATAALLKEYCATEGORY") {
+          for (var i = 0; i < data['message'].length; i++) {
+            print("${streamController.stream} stream");
+            print('${data} data stream ');
+            final keyCategory = KeyCategoryList.fromJson(data['message'][i]);
+            key.add(keyCategory);
+          }
+          return key;
         }
-        return key;
       }
+      return [];
+    } catch (e, s) {
+      print(e);
+      print(s);
+      return [];
     }
-    return [];
   }
 
   Stream<List<Index>> indexCategoryForUser(String title) async* {
@@ -319,7 +448,7 @@ class WebsocketHelper with ChangeNotifier {
 
   @override
   void dispose() {
-    _channel.sink.close();
+    channel?.sink.close();
     super.dispose();
   }
 }
