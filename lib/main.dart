@@ -5,14 +5,16 @@ import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 void main() {
-  runApp(MultiProvider(
-    providers: [
-      ChangeNotifierProvider<WebsocketHelper>(
-        create: (_) => WebsocketHelper(
-          WebSocketChannel.connect(Uri.parse('ws://127.0.0.1:8080/ws')),
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<WebsocketHelper>(
+          create: (_) => WebsocketHelper(
+            WebSocketChannel.connect(Uri.parse('ws://127.0.0.1:8080/ws')),
+          ),
         ),
-      ),
-    ],
-    child: App(),
-  ));
+      ],
+      child: App(),
+    ),
+  );
 }
