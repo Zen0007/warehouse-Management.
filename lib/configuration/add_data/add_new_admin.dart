@@ -31,7 +31,15 @@ class _AddNewAdminState extends State<AddNewAdmin> {
     // ignore: unused_local_variable
     final nameAdmin = prefs.getString('token');
 
-    if (!validate) return;
+    if (!validate) {
+      await Future.delayed(
+        Duration(seconds: 5),
+        () {
+          _fromKey.currentState!.reset();
+        },
+      );
+      return;
+    }
     _fromKey.currentState!.save();
     try {
       setState(
