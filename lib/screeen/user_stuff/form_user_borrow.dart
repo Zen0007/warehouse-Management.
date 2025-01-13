@@ -53,11 +53,20 @@ class _FormForUserState extends State<FormForUser> {
   }
 
   void sumbit(BuildContext context, WebsocketHelper wsHelper) async {
-    final validate = _fromKey.currentState!.validate();
-
-    if (!validate) return;
-    _fromKey.currentState!.save();
     try {
+      final validate = _fromKey.currentState!.validate();
+      print("$validate validation");
+      if (!validate) {
+        await Future.delayed(
+          Duration(seconds: 5),
+          () {
+            _fromKey.currentState!.reset();
+          },
+        );
+        return;
+      }
+      _fromKey.currentState!.save();
+
       setState(
         () {
           isLoding = true;
@@ -116,8 +125,9 @@ class _FormForUserState extends State<FormForUser> {
           }
         }
       }
-    } catch (e) {
+    } catch (e, s) {
       debugPrint("$e");
+      print("$s from user");
     }
   }
 
@@ -146,15 +156,17 @@ class _FormForUserState extends State<FormForUser> {
             style: TextButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primary,
             ),
-            onPressed: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) {
-                  wsHelper.getDataBorrow();
-                  return UserHasBorrows();
-                },
-              ),
-            ),
+            onPressed: () {
+              wsHelper.getDataBorrow();
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) {
+                    return UserHasBorrows();
+                  },
+                ),
+              );
+            },
             child: Text(
               "Yes",
               style: TextStyle(
@@ -431,7 +443,7 @@ class _FormForUserState extends State<FormForUser> {
                       child: Icon(Icons.add),
                     ),
                   ),
-                  keyboardType: TextInputType.name,
+                  keyboardType: TextInputType.number,
                   autocorrect: true,
                   textCapitalization: TextCapitalization.none,
                   validator: (value) {
@@ -530,7 +542,9 @@ class _FormForUserState extends State<FormForUser> {
                 child: Consumer<WebsocketHelper>(
                   builder: (contex, wsHelper, child) {
                     return ElevatedButton(
-                      onPressed: () => sumbit(context, wsHelper),
+                      onPressed: () {
+                        sumbit(context, wsHelper);
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
                             Theme.of(context).colorScheme.secondary,
@@ -630,131 +644,134 @@ class _FormForUserState extends State<FormForUser> {
             top: constraints.maxWidth * 0.05,
             bottom: constraints.maxWidth * 0.005,
           ),
-          child: Column(
-            children: [
-              TextFormField(
-                decoration: InputDecoration(
-                  hintText: " nama",
-                  counterStyle: const TextStyle(
-                    backgroundColor: Colors.black,
+          child: Form(
+            key: _fromKey,
+            child: Column(
+              children: [
+                TextFormField(
+                  decoration: InputDecoration(
+                    hintText: " nama",
+                    counterStyle: const TextStyle(
+                      backgroundColor: Colors.black,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
+                    fillColor: Theme.of(context).colorScheme.secondary,
+                    filled: true,
+                    prefixIcon: const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Icon(Icons.add),
+                    ),
                   ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                  fillColor: Theme.of(context).colorScheme.secondary,
-                  filled: true,
-                  prefixIcon: const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Icon(Icons.add),
-                  ),
+                  keyboardType: TextInputType.name,
+                  autocorrect: true,
+                  textCapitalization: TextCapitalization.none,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter a valid name';
+                    }
+                    return null;
+                  },
+                  onSaved: (newValue) => name = newValue ?? "",
                 ),
-                keyboardType: TextInputType.name,
-                autocorrect: true,
-                textCapitalization: TextCapitalization.none,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a valid name';
-                  }
-                  return null;
-                },
-                onSaved: (newValue) => name = newValue ?? "",
-              ),
-              // sizeBox
-              SizedBox(
-                height: constraints.maxWidth * 0.03,
-              ),
-              TextFormField(
-                decoration: InputDecoration(
-                  hintText: " kelas",
-                  counterStyle: const TextStyle(
-                    backgroundColor: Colors.black,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                  fillColor: Theme.of(context).colorScheme.secondary,
-                  filled: true,
-                  prefixIcon: const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Icon(Icons.add),
-                  ),
+                // sizeBox
+                SizedBox(
+                  height: constraints.maxWidth * 0.03,
                 ),
-                keyboardType: TextInputType.name,
-                autocorrect: true,
-                textCapitalization: TextCapitalization.none,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a valid name';
-                  }
-                  return null;
-                },
-                onSaved: (newValue) => kelas = newValue ?? "",
-              ),
-              SizedBox(
-                height: constraints.maxWidth * 0.03,
-              ),
-              TextFormField(
-                decoration: InputDecoration(
-                  hintText: " nisn",
-                  counterStyle: const TextStyle(
-                    backgroundColor: Colors.black,
+                TextFormField(
+                  decoration: InputDecoration(
+                    hintText: " kelas",
+                    counterStyle: const TextStyle(
+                      backgroundColor: Colors.black,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
+                    fillColor: Theme.of(context).colorScheme.secondary,
+                    filled: true,
+                    prefixIcon: const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Icon(Icons.add),
+                    ),
                   ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                  fillColor: Theme.of(context).colorScheme.secondary,
-                  filled: true,
-                  prefixIcon: const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Icon(Icons.add),
-                  ),
+                  keyboardType: TextInputType.name,
+                  autocorrect: true,
+                  textCapitalization: TextCapitalization.none,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter a valid name';
+                    }
+                    return null;
+                  },
+                  onSaved: (newValue) => kelas = newValue ?? "",
                 ),
-                keyboardType: TextInputType.name,
-                autocorrect: true,
-                textCapitalization: TextCapitalization.none,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a valid name';
-                  }
-                  return null;
-                },
-                onSaved: (newValue) => nisn = newValue ?? "",
-              ),
-              SizedBox(
-                height: constraints.maxWidth * 0.03,
-              ),
-              TextFormField(
-                decoration: InputDecoration(
-                  hintText: " nama guru",
-                  counterStyle: const TextStyle(
-                    backgroundColor: Colors.black,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                  fillColor: Theme.of(context).colorScheme.secondary,
-                  filled: true,
-                  prefixIcon: const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Icon(Icons.add),
-                  ),
+                SizedBox(
+                  height: constraints.maxWidth * 0.03,
                 ),
-                keyboardType: TextInputType.name,
-                autocorrect: true,
-                textCapitalization: TextCapitalization.none,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a valid name';
-                  }
-                  return null;
-                },
-                onSaved: (newValue) => nameGuru = newValue ?? "",
-              ),
-            ],
+                TextFormField(
+                  decoration: InputDecoration(
+                    hintText: " nisn",
+                    counterStyle: const TextStyle(
+                      backgroundColor: Colors.black,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
+                    fillColor: Theme.of(context).colorScheme.secondary,
+                    filled: true,
+                    prefixIcon: const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Icon(Icons.add),
+                    ),
+                  ),
+                  keyboardType: TextInputType.number,
+                  autocorrect: true,
+                  textCapitalization: TextCapitalization.none,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter a valid name';
+                    }
+                    return null;
+                  },
+                  onSaved: (newValue) => nisn = newValue ?? "",
+                ),
+                SizedBox(
+                  height: constraints.maxWidth * 0.03,
+                ),
+                TextFormField(
+                  decoration: InputDecoration(
+                    hintText: " nama guru",
+                    counterStyle: const TextStyle(
+                      backgroundColor: Colors.black,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
+                    fillColor: Theme.of(context).colorScheme.secondary,
+                    filled: true,
+                    prefixIcon: const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Icon(Icons.add),
+                    ),
+                  ),
+                  keyboardType: TextInputType.name,
+                  autocorrect: true,
+                  textCapitalization: TextCapitalization.none,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter a valid name';
+                    }
+                    return null;
+                  },
+                  onSaved: (newValue) => nameGuru = newValue ?? "",
+                ),
+              ],
+            ),
           ),
         ),
         if (isLoding)
@@ -812,7 +829,9 @@ class _FormForUserState extends State<FormForUser> {
                 child: Consumer<WebsocketHelper>(
                   builder: (contex, wsHelper, child) {
                     return ElevatedButton(
-                      onPressed: () => sumbit(context, wsHelper),
+                      onPressed: () {
+                        sumbit(context, wsHelper);
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
                             Theme.of(context).colorScheme.secondary,

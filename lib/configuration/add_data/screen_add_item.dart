@@ -70,7 +70,15 @@ class _AddItemState extends State<AddItem> {
   void sumbit(BuildContext context, WebsocketHelper wsHelper) async {
     final validate = _fromKey.currentState!.validate();
 
-    if (!validate) return;
+    if (!validate) {
+      await Future.delayed(
+        Duration(seconds: 5),
+        () {
+          _fromKey.currentState!.reset();
+        },
+      );
+      return;
+    }
     _fromKey.currentState!.save();
 
     try {
