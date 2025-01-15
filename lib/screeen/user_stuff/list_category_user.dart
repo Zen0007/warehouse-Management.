@@ -109,7 +109,7 @@ class ListCategoryUser extends StatelessWidget {
                             title: snapshot.data![index],
                             onSelectCategory: () {
                               wsHelper
-                                  .getDataCategoryUser(); // triger ws send data
+                                  .getDataCategoryUserOnce(); // triger ws send data
                               selectCategory(
                                 context,
                                 snapshot.data![index].key,

@@ -157,7 +157,7 @@ class _FormForUserState extends State<FormForUser> {
               backgroundColor: Theme.of(context).colorScheme.primary,
             ),
             onPressed: () {
-              wsHelper.getDataBorrow();
+              wsHelper.userHasBorrowsOnce();
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
