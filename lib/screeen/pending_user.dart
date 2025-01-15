@@ -30,7 +30,8 @@ class PendingUser extends StatelessWidget {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Consumer<WebsocketHelper>(
         builder: (contex, wsHelper, child) {
-          //  this code fro catch data from borrow user
+          //  this code for listener database
+          wsHelper.getDataPending();
 
           return StreamBuilder(
             stream: wsHelper.pendingData(),
