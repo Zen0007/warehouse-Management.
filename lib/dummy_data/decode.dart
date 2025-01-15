@@ -110,6 +110,8 @@ class BorrowUser {
   final String? classUser;
   final String? nameTeacher;
   final String? nisn;
+  final String? admin;
+  final String? time;
   final Uint8List imageUser;
   final List? imageNisn;
   final String? status;
@@ -123,6 +125,8 @@ class BorrowUser {
     required this.imageUser,
     this.imageNisn,
     this.status,
+    this.admin,
+    this.time,
     required this.item,
   });
 
@@ -148,6 +152,8 @@ class BorrowUser {
       imageUser: intList,
       imageNisn: json['imageSelfie'],
       status: json['status'],
+      admin: json['admin'],
+      time: json['time'],
       item: items,
     );
   }
