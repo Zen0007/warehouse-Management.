@@ -36,8 +36,8 @@ class CardBorrow extends StatelessWidget {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: Image.asset(
-                  "assets/data/black_bull.jpeg",
+                child: Image.memory(
+                  data.imageUser,
                   height: imageSize * 0.65,
                   width: imageSize * 0.8,
                   fit: BoxFit.cover,
@@ -81,6 +81,21 @@ class CardBorrow extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      Text(
+                        "status",
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (data.admin != null)
+                        Text(
+                          "admin",
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -115,6 +130,19 @@ class CardBorrow extends StatelessWidget {
                           color: Theme.of(context).colorScheme.onPrimary,
                         ),
                       ),
+                      Text(
+                        "${data.status}",
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                      ),
+                      if (data.admin != null)
+                        Text(
+                          "${data.admin}",
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        ),
                     ],
                   ),
                 )
@@ -160,6 +188,14 @@ class CardBorrow extends StatelessWidget {
                 ),
               ),
             ),
+            if (data.time != null)
+              Text(
+                "${data.time}",
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontSize: 30,
+                ),
+              ),
           ],
         ),
         actions: [

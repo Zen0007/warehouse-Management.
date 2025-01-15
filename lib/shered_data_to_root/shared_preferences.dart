@@ -22,8 +22,8 @@ class StoredUserChoice {
 
   Future<void> delete() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // ignore: unused_local_variable
     final remove = await prefs.remove("choice");
-    print("$remove remove");
   }
 
   Future<void> addNewMapToSharedPreferences(

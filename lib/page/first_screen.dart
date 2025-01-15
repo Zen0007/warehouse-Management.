@@ -1,67 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:werehouse_inventory/auth/login.dart';
-import 'package:werehouse_inventory/fetch_socket.dart/verifikasi.dart';
-import 'package:werehouse_inventory/page/home_page.dart';
-import 'package:werehouse_inventory/screeen/user%20staff/list_category_user.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
+import 'package:werehouse_inventory/screeen/user_stuff/list_category_user.dart';
 
-class MiddleScreen extends StatefulWidget {
-  const MiddleScreen({super.key});
+class FirstScreen extends StatefulWidget {
+  const FirstScreen({super.key});
 
   @override
-  State<MiddleScreen> createState() => _MiddleScreenState();
+  State<FirstScreen> createState() => _MiddleScreenState();
 }
 
-class _MiddleScreenState extends State<MiddleScreen> {
+class _MiddleScreenState extends State<FirstScreen> {
   final GlobalKey<ScaffoldState> drawer = GlobalKey<ScaffoldState>();
-
-  // this before for cheak token user but not  can use provider
-  void chekToken() async {
-    try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final getToken = prefs.getString('token');
-      debugPrint("$getToken nameUser");
-
-      if (getToken == null) return;
-
-      if (getToken.isNotEmpty) {
-        final stream = verifikasi(getToken);
-        stream.listen(
-          (message) {
-            if (message["endpoint"] == "verikasi") {
-              if (message.containsKey('message')) {
-                debugPrint("middle");
-                if (!mounted) return;
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => HomePage(),
-                  ),
-                );
-                return;
-              } else if (message.containsKey("warning")) {
-                if (!mounted) return;
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => MiddleScreen(),
-                  ),
-                );
-              }
-            }
-          },
-        );
-      }
-    } catch (e, s) {
-      debugPrint("$e");
-      debugPrint('$s');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    print(size);
     return Scaffold(
       key: drawer,
       appBar: AppBar(
@@ -262,7 +216,7 @@ class _MiddleScreenState extends State<MiddleScreen> {
                   left: constraints.maxWidth * 0.02,
                   top: constraints.maxHeight * 0.35,
                   child: Container(
-                    width: size.width * 0.33,
+                    width: constraints.maxWidth * 0.33,
                     height: constraints.maxWidth * 0.15,
                     color: Theme.of(context).colorScheme.secondary,
                   ),
@@ -270,14 +224,14 @@ class _MiddleScreenState extends State<MiddleScreen> {
               ],
             );
           } else {
-            return dekstop(context, size, constraints);
+            return dekstop(context, constraints);
           }
         },
       ),
     );
   }
 
-  Stack dekstop(BuildContext context, Size size, BoxConstraints constraints) {
+  Stack dekstop(BuildContext context, BoxConstraints constraints) {
     return Stack(
       children: [
         Row(
@@ -303,19 +257,19 @@ class _MiddleScreenState extends State<MiddleScreen> {
           ],
         ),
         Positioned(
-          left: size.width * 0.45,
+          left: constraints.maxWidth * 0.45,
           top: constraints.maxHeight * 0.1,
           child: Container(
-            width: size.width * 0.5,
+            width: constraints.maxWidth * 0.5,
             height: constraints.maxWidth * 0.35,
-            color: Theme.of(context).colorScheme.primary,
+            color: Colors.blue,
           ),
         ),
         Positioned(
           left: constraints.maxWidth * 0.05,
           top: constraints.maxHeight * 0.25,
           child: Container(
-            width: size.width * 0.35,
+            width: constraints.maxWidth * 0.35,
             height: constraints.maxWidth * 0.15,
             color: Theme.of(context).colorScheme.primary,
           ),

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 class CategoryList {
   final String key;
   final String id;
@@ -55,19 +57,23 @@ class Index {
   String status;
   String label;
   String name;
-  String image;
+  Uint8List image;
   String index;
   String category;
 
   factory Index.fromJson(
-          Map<String, dynamic> json, String index, String category) =>
-      Index(
-          name: json['nameItem'],
-          status: json['status'],
-          label: json['label'],
-          image: json['image'],
-          index: index,
-          category: category);
+      Map<String, dynamic> jsons, String index, String category) {
+    final List<int> listInt = List<int>.from(jsons['image'] as List);
+    final Uint8List intList = Uint8List.fromList(listInt);
+    return Index(
+        name: jsons['name'],
+        status: jsons['status'],
+        label: jsons['Label'],
+        image: intList,
+        index: index,
+        category: category);
+  }
+
   Map<String, dynamic> toJson() => {
         "status": status,
         "nameItem": name,
@@ -104,8 +110,10 @@ class BorrowUser {
   final String? classUser;
   final String? nameTeacher;
   final String? nisn;
-  final String? imageUser;
-  final String? imageNisn;
+  final String? admin;
+  final String? time;
+  final Uint8List imageUser;
+  final List? imageNisn;
   final String? status;
   final List<Item> item;
 
@@ -114,33 +122,39 @@ class BorrowUser {
     this.classUser,
     this.nameTeacher,
     this.nisn,
-    this.imageUser,
+    required this.imageUser,
     this.imageNisn,
     this.status,
+    this.admin,
+    this.time,
     required this.item,
   });
 
   factory BorrowUser.from(Map json) {
-    final List<Item> item = [];
+    final List<Item> items = [];
     for (var data in json['items']) {
       final index = Item.from(
         data["category"],
-        data['id'],
+        data['index'],
         data['nameItem'],
         data['label'],
       );
-      item.add(index);
+      items.add(index);
     }
+    final List<int> listInt = List<int>.from(json['imageSelfie'] as List);
+    final Uint8List intList = Uint8List.fromList(listInt);
 
     return BorrowUser(
       nameUser: json['name'],
       classUser: json['class'],
       nameTeacher: json['nameTeacher'],
       nisn: json['nisn'],
-      imageUser: json['imageSelfie'],
-      imageNisn: json['imageStudenCard'],
+      imageUser: intList,
+      imageNisn: json['imageSelfie'],
       status: json['status'],
-      item: item,
+      admin: json['admin'],
+      time: json['time'],
+      item: items,
     );
   }
 }

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:werehouse_inventory/page/middle_screen.dart';
+import 'package:werehouse_inventory/configuration/add_data/screen_service.dart';
+import 'package:werehouse_inventory/configuration/delete/controler_service.dart';
+import 'package:werehouse_inventory/page/first_screen.dart';
 import 'package:werehouse_inventory/screeen/borrow.dart';
-import 'package:werehouse_inventory/screeen/user%20staff/list_key_category.dart';
+import 'package:werehouse_inventory/screeen/grantend_user.dart';
+import 'package:werehouse_inventory/screeen/user_stuff/list_key_category.dart';
 import 'package:werehouse_inventory/screeen/category_admin.dart';
 import 'package:werehouse_inventory/screeen/pending_user.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
@@ -128,7 +131,7 @@ class HomePage extends StatelessWidget {
                                           );
 
                                           // get all data for admin
-                                          wsHelper.getDataAllCollection();
+                                          wsHelper.getDataAllCollectionOnce();
                                         },
                                       ),
                                   ] else
@@ -169,7 +172,7 @@ class HomePage extends StatelessWidget {
                           ),
                         );
 
-                        wsHelper.getDataBorrow(); // send request to ws
+                        wsHelper.getDataBorrowOnce(); // send request to ws
                       },
                     ),
                     ListTile(
@@ -190,7 +193,7 @@ class HomePage extends StatelessWidget {
                             builder: (context) => const PendingUser(),
                           ),
                         );
-                        wsHelper.getDataPending();
+                        wsHelper.getDataPendingOnce();
                       },
                     ),
                     ListTile(
@@ -204,26 +207,68 @@ class HomePage extends StatelessWidget {
                           color: Theme.of(context).colorScheme.onPrimary,
                         ),
                       ),
-                      // onTap: () => Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(builder: (context) => const BorrowUser()),
-                      // ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const GrantendUser()),
+                        );
+                        wsHelper.getDataGrantedOnce();
+                      },
                     ),
-                    ListTile(
-                      leading: Icon(
-                        color: Theme.of(context).colorScheme.onPrimary,
-                        Icons.adjust_sharp,
-                      ),
+                    ExpansionTile(
                       title: Text(
                         "service",
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onPrimary,
                         ),
                       ),
-                      // onTap: () => Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(builder: (context) => const BorrowUser()),
-                      // ),
+                      leading: Icon(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        Icons.adjust_sharp,
+                      ),
+                      childrenPadding: const EdgeInsets.only(
+                        left: 60,
+                        bottom: 10,
+                      ),
+                      children: [
+                        ListTile(
+                          leading: Icon(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            Icons.adjust_sharp,
+                          ),
+                          title: Text(
+                            "add",
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
+                          ),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ControllerService(),
+                            ),
+                          ),
+                        ),
+                        ListTile(
+                          leading: Icon(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            Icons.adjust_sharp,
+                          ),
+                          title: Text(
+                            "delete",
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
+                          ),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const ControllerServiceDelete()),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 );
@@ -240,7 +285,7 @@ class HomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => MiddleScreen(),
+                      builder: (context) => FirstScreen(),
                     ),
                   );
                   final prefs = await SharedPreferences.getInstance();

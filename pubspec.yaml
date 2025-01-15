@@ -42,8 +42,7 @@ dependencies:
   image_picker_for_web: ^3.0.6
   image_picker: ^1.1.2
   # not use 
-  riverpod: ^2.6.1
-  flutter_riverpod: ^2.6.1
+ 
  
 
 dev_dependencies:

@@ -1,21 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:werehouse_inventory/screeen/user%20staff/category_user.dart';
-import 'package:werehouse_inventory/screeen/user staff/category_grid_item.dart';
+import 'package:werehouse_inventory/card/card_item.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
-class ListCategoryUser extends StatelessWidget {
-  const ListCategoryUser({super.key});
-
-  void selectCategory(BuildContext context, String title) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => ScreenCategoryUser(
-          title: title,
-        ),
-      ),
-    );
-  }
+class ScreenCategoryUser extends StatelessWidget {
+  const ScreenCategoryUser({super.key, required this.title});
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +13,7 @@ class ListCategoryUser extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
         title: Text(
-          "List Items",
+          title,
           style: TextStyle(
             color: Theme.of(context).colorScheme.onPrimary,
           ),
@@ -35,79 +25,57 @@ class ListCategoryUser extends StatelessWidget {
             color: Theme.of(context).colorScheme.secondary,
           ),
         ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            style: TextButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.surface,
-            ),
-            icon: Icon(
-              Icons.bookmark,
-            ),
-          ),
-          SizedBox(
-            width: 10,
-          ),
-        ],
       ),
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Consumer<WebsocketHelper>(
         builder: (contex, wsHelper, child) {
-          return FutureBuilder(
-            future: wsHelper.keyCategory(),
+          //listener database
+          wsHelper.getDataCategoryUser();
+
+          return StreamBuilder(
+            stream: wsHelper.indexCategoryForUser(title),
             builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const Center(
-                  child: CircularProgressIndicator.adaptive(),
-                );
-              } else if (snapshot.hasData) {
+              if (snapshot.hasData) {
                 if (snapshot.data!.isNotEmpty) {
                   return LayoutBuilder(
                     builder: (context, constraints) {
                       int count;
                       double mainAxisExtent;
-                      debugPrint("${constraints.maxWidth} WITHT");
+                      print(constraints.maxWidth);
 
                       if (constraints.maxWidth < 480) {
                         count = 2;
-                        mainAxisExtent = constraints.maxWidth * 0.4;
+                        mainAxisExtent = constraints.maxWidth * 0.67;
                       } else if (constraints.maxWidth < 700) {
                         count = 3;
-                        mainAxisExtent = constraints.maxWidth * 0.25;
+                        mainAxisExtent = constraints.maxWidth * 0.5;
                       } else if (constraints.maxWidth < 900) {
                         count = 4;
-                        mainAxisExtent = constraints.maxWidth * 0.2;
+                        mainAxisExtent = constraints.maxWidth * 0.35;
                       } else if (constraints.maxWidth < 1000) {
                         count = 5;
-                        mainAxisExtent = constraints.maxWidth * 0.17;
+                        mainAxisExtent = constraints.maxWidth * 0.3;
                       } else {
                         count = 6;
-                        mainAxisExtent = constraints.maxWidth * 0.15;
+                        mainAxisExtent = constraints.maxWidth * 0.25;
                       }
 
-                      // double sizeImage = constraints.maxWidth / count;
-
+                      double sizeImage = constraints.maxWidth / count;
                       return GridView.builder(
                         shrinkWrap: true,
                         itemCount: snapshot.data!.length,
-                        padding: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(10),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: count,
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 1,
                           mainAxisExtent: mainAxisExtent,
                         ),
                         itemBuilder: (context, index) {
-                          return CategoryGridItem(
-                            title: snapshot.data![index],
-                            onSelectCategory: () {
-                              wsHelper
-                                  .getDataCategoryUser(); // triger ws send data
-                              selectCategory(
-                                context,
-                                snapshot.data![index].key,
-                              );
-                            },
+                          return CardItem.forUser(
+                            data: snapshot.data![index],
+                            imageSize: sizeImage,
+                            isUser: true,
                           );
                         },
                       );
@@ -119,11 +87,14 @@ class ListCategoryUser extends StatelessWidget {
                       'not have item',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onPrimary,
-                        fontSize: 30,
                       ),
                     ),
                   );
                 }
+              } else if (!snapshot.hasData) {
+                return const Center(
+                  child: CircularProgressIndicator.adaptive(),
+                );
               } else {
                 return Center(
                   child: Text(

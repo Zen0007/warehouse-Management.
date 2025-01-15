@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:werehouse_inventory/configuration/add_new_admin.dart';
-import 'package:werehouse_inventory/configuration/screen_add_category.dart';
-import 'package:werehouse_inventory/configuration/screen_add_item.dart';
-import 'package:werehouse_inventory/configuration/tab_apbar.dart';
+import 'package:werehouse_inventory/configuration/add_data/tab_apbar.dart';
 
-class ControllerService extends StatelessWidget {
-  const ControllerService({super.key});
+class ControllerServiceDelete extends StatelessWidget {
+  const ControllerServiceDelete({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +31,9 @@ class ControllerService extends StatelessWidget {
                 labelColor: Theme.of(context).colorScheme.onSecondary,
                 unselectedLabelColor: Colors.white,
                 tabs: [
-                  ScreenService(title: 'Add Admin'),
-                  ScreenService(title: 'Add Item'),
-                  ScreenService(title: 'Add Category'),
+                  ScreenService(title: 'Delete Items'),
+                  ScreenService(title: 'Detele Category'),
+                  ScreenService(title: 'Delete Granted'),
                 ],
               ),
             ),
@@ -45,14 +42,11 @@ class ControllerService extends StatelessWidget {
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: TabBarView(
           children: [
-            /* add new admin */
-            AddNewAdmin(),
+            /* delete new delete */
 
             /* add new item */
-            AddItem(),
 
             /* add new name collection category */
-            AddCategory()
           ],
         ),
         floatingActionButton: FloatingActionButton.small(

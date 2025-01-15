@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:werehouse_inventory/card/card_borrow.dart';
+import 'package:werehouse_inventory/card/card_pending.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
-class BorrowUserPage extends StatelessWidget {
-  const BorrowUserPage({super.key});
+class GrantendUser extends StatelessWidget {
+  const GrantendUser({super.key});
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
         title: Text(
-          "Daftar  Peminjam",
+          "Daftar  Pengembalian",
           style: TextStyle(
             color: Theme.of(context).colorScheme.onPrimary,
           ),
@@ -29,11 +30,11 @@ class BorrowUserPage extends StatelessWidget {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Consumer<WebsocketHelper>(
         builder: (contex, wsHelper, child) {
-          //  this code fro catch data from borrow user
-          wsHelper.getDataBorrow(); // listner database
+          //  this code for listener database
+          wsHelper.getDataPending();
 
           return StreamBuilder(
-            stream: wsHelper.borrowUser(),
+            stream: wsHelper.userHasReturnItems(),
             builder: (context, snapshot) {
               debugPrint("${snapshot.data} is exist");
               debugPrint(
@@ -91,7 +92,7 @@ class BorrowUserPage extends StatelessWidget {
                         mainAxisExtent: mainAxisExtent,
                       ),
                       itemBuilder: (context, index) {
-                        return CardBorrow(
+                        return CardPending(
                           data: snapshot.data![index],
                           imageSize: sizeImage,
                         );
