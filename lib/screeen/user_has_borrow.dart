@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:werehouse_inventory/page/middle_screen.dart';
+import 'package:werehouse_inventory/page/first_screen.dart';
 import 'package:werehouse_inventory/screeen/user_stuff/category_user.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
@@ -129,7 +129,7 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
               Consumer<WebsocketHelper>(
                 builder: (contex, wsHelper, child) {
                   return StreamBuilder(
-                    stream: wsHelper.checkUserHasBorrow(),
+                    stream: wsHelper.userHasBorrows(),
                     builder: (context, snapshot) {
                       if (snapshot.hasData) {
                         if (snapshot.data != null) {
@@ -322,7 +322,7 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
                             },
                           );
                         } else {
-                          return MiddleScreen();
+                          return FirstScreen();
                         }
                       } else if (!snapshot.hasData) {
                         return Center(
@@ -357,7 +357,7 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
                 return MaterialButton(
                   color: Colors.blue,
                   onPressed: () {
-                    wsHelper.sendRequestReturnItem();
+                    wsHelper.testDeleteUser();
                   },
                   child: Text("kembalikan"),
                 );
