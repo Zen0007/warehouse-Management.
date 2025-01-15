@@ -30,6 +30,7 @@ class BorrowUserPage extends StatelessWidget {
       body: Consumer<WebsocketHelper>(
         builder: (contex, wsHelper, child) {
           //  this code fro catch data from borrow user
+          wsHelper.getDataBorrow(); // listner database
 
           return StreamBuilder(
             stream: wsHelper.borrowUser(),
