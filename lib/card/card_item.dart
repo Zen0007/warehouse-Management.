@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:werehouse_inventory/dummy_data/decode.dart';
 import 'package:werehouse_inventory/shered_data_to_root/shared_preferences.dart';
+import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class CardItem extends StatelessWidget {
   const CardItem({
@@ -38,6 +40,79 @@ class CardItem extends StatelessWidget {
     final dataShow = await StoredUserChoice().getListFromSharedPreferences();
 
     debugPrint("$dataShow data");
+  }
+
+  Future<dynamic> messages(BuildContext context, String message,
+      String response, Color color, Color backgroundColor) {
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog.adaptive(
+        backgroundColor: backgroundColor,
+        title: Text(
+          message,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        content: Text(
+          response,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: backgroundColor,
+            ),
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              "Yes",
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void updateStatus(BuildContext context, WebsocketHelper wsHelper) async {
+    wsHelper.sendMessage({
+      'endpoint': 'updateStatusItem',
+      'data': {
+        'category': data.category,
+        'index': data.index,
+      }
+    });
+
+    await for (var status in wsHelper.streamController.stream) {
+      if (status['endpoint'] == "UPDATESTATUSITEM") {
+        if (status.containsKey('message')) {
+          messages(
+            context,
+            'MESSAGE',
+            status['message'],
+            Theme.of(context).colorScheme.onSecondary,
+            Theme.of(context).colorScheme.secondary,
+          );
+
+          return;
+        } else {
+          messages(
+            context,
+            'WARNING',
+            status['warning'],
+            Theme.of(context).colorScheme.onError,
+            Theme.of(context).colorScheme.error,
+          );
+        }
+      }
+    }
   }
 
   @override
@@ -146,28 +221,35 @@ class CardItem extends StatelessWidget {
           if (isUser)
             Padding(
               padding: const EdgeInsets.only(bottom: 5, right: 6),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    onPressed: () => store(
-                      data.category,
-                      data.index,
-                      data.name,
-                      data.label,
-                    ),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.secondary,
-                    ),
-                    icon: Icon(
-                      Icons.bookmark_add_outlined,
-                    ),
-                  ),
-                ],
+              child: Consumer<WebsocketHelper>(
+                builder: (context, wsHelper, child) {
+                  return button(context, wsHelper);
+                },
               ),
             )
         ],
       ),
+    );
+  }
+
+  Row button(BuildContext context, WebsocketHelper wsHelper) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        IconButton(
+          onPressed: () {
+            store(data.category, data.index, data.name, data.label);
+            updateStatus(context, wsHelper);
+            
+          },
+          style: IconButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+          ),
+          icon: Icon(
+            Icons.bookmark_add_outlined,
+          ),
+        ),
+      ],
     );
   }
 }
