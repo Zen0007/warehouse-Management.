@@ -82,12 +82,20 @@ class CardBorrow extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        "nisn",
+                        "status",
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      if (data.admin != null)
+                        Text(
+                          "admin",
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -128,6 +136,13 @@ class CardBorrow extends StatelessWidget {
                           color: Theme.of(context).colorScheme.onPrimary,
                         ),
                       ),
+                      if (data.admin != null)
+                        Text(
+                          "${data.admin}",
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        ),
                     ],
                   ),
                 )
@@ -173,6 +188,14 @@ class CardBorrow extends StatelessWidget {
                 ),
               ),
             ),
+            if (data.time != null)
+              Text(
+                "${data.time}",
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontSize: 30,
+                ),
+              ),
           ],
         ),
         actions: [
