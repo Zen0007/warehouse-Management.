@@ -29,7 +29,8 @@ class ScreenCategoryAdmin extends StatelessWidget {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Consumer<WebsocketHelper>(
         builder: (contex, wsHelper, child) {
-          //
+          //listener database
+          wsHelper.getDataAllCollection();
 
           return StreamBuilder(
             stream: wsHelper.indexCategoryForAdmin(title),
