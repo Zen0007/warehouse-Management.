@@ -3,8 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:werehouse_inventory/configuration/add_data/screen_service.dart';
 import 'package:werehouse_inventory/configuration/delete/controler_service.dart';
-import 'package:werehouse_inventory/page/middle_screen.dart';
+import 'package:werehouse_inventory/page/first_screen.dart';
 import 'package:werehouse_inventory/screeen/borrow.dart';
+import 'package:werehouse_inventory/screeen/grantend_user.dart';
 import 'package:werehouse_inventory/screeen/user_stuff/list_key_category.dart';
 import 'package:werehouse_inventory/screeen/category_admin.dart';
 import 'package:werehouse_inventory/screeen/pending_user.dart';
@@ -130,7 +131,7 @@ class HomePage extends StatelessWidget {
                                           );
 
                                           // get all data for admin
-                                          wsHelper.getDataAllCollection();
+                                          wsHelper.getDataAllCollectionOnce();
                                         },
                                       ),
                                   ] else
@@ -171,7 +172,7 @@ class HomePage extends StatelessWidget {
                           ),
                         );
 
-                        wsHelper.getDataBorrow(); // send request to ws
+                        wsHelper.getDataBorrowOnce(); // send request to ws
                       },
                     ),
                     ListTile(
@@ -192,7 +193,7 @@ class HomePage extends StatelessWidget {
                             builder: (context) => const PendingUser(),
                           ),
                         );
-                        wsHelper.getDataPending();
+                        wsHelper.getDataPendingOnce();
                       },
                     ),
                     ListTile(
@@ -206,10 +207,14 @@ class HomePage extends StatelessWidget {
                           color: Theme.of(context).colorScheme.onPrimary,
                         ),
                       ),
-                      // onTap: () => Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(builder: (context) => const BorrowUser()),
-                      // ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const GrantendUser()),
+                        );
+                        wsHelper.getDataGrantedOnce();
+                      },
                     ),
                     ExpansionTile(
                       title: Text(
@@ -280,7 +285,7 @@ class HomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => MiddleScreen(),
+                      builder: (context) => FirstScreen(),
                     ),
                   );
                   final prefs = await SharedPreferences.getInstance();
