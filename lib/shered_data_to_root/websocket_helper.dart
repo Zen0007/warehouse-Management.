@@ -23,8 +23,19 @@ class WebsocketHelper with ChangeNotifier {
     notifyListeners();
   }
 
+  void getDataBorrowOnce() {
+    channel?.sink.add(json.encode({"endpoint": "getDataBorrowOnce"}));
+    notifyListeners();
+  }
+
   void getDataCategoryUser() {
     channel?.sink.add(json.encode({"endpoint": "getDataCollectionAvaileble"}));
+    notifyListeners();
+  }
+
+  void getDataCategoryUserOnce() {
+    channel?.sink
+        .add(json.encode({"endpoint": "getDataCollectionAvailebleOnce"}));
     notifyListeners();
   }
 
@@ -33,8 +44,18 @@ class WebsocketHelper with ChangeNotifier {
     notifyListeners();
   }
 
+  void getDataAllCollectionOnce() {
+    channel?.sink.add(json.encode({"endpoint": "getDataAllCollectionOnce"}));
+    notifyListeners();
+  }
+
   void getDataPending() {
     channel?.sink.add(json.encode({"endpoint": "getDataPending"}));
+    notifyListeners();
+  }
+
+  void getDataPendingOnce() {
+    channel?.sink.add(json.encode({"endpoint": "getDataPendingOnce"}));
     notifyListeners();
   }
 
@@ -48,16 +69,36 @@ class WebsocketHelper with ChangeNotifier {
     notifyListeners();
   }
 
+  void getDataGrantedOnce() {
+    channel?.sink.add(json.encode({"endpoint": "getDataGrantedOnce"}));
+    notifyListeners();
+  }
+
+  void userHasBorrowsOnce() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final getToken = prefs.getString('hasBorrow');
+    print("$getToken user name");
+
+    channel?.sink.add(json.encode(
+      {
+        "endpoint": "hasBorrowOnce",
+        "data": {
+          "name": getToken ?? '',
+        }
+      },
+    ));
+  }
+
   void connect() async {
     try {
       broadCastStream = channel?.stream.asBroadcastStream();
+      notifyListeners();
       broadCastStream?.listen(
         (message) {
           final streamData = json.decode(message);
           notifyListeners();
 
           streamController.sink.add(streamData);
-          notifyListeners();
         },
         onDone: () {
           print('connection close ');
@@ -131,10 +172,17 @@ class WebsocketHelper with ChangeNotifier {
         if (data.containsKey('message')) {
           final SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.remove('hasBorrow');
+          notifyListeners();
           return;
         }
       }
     }
+  }
+
+  void testDeleteUser() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('hasBorrow');
+    return;
   }
 
   void sendMessage(Map<String, dynamic> message) {
@@ -170,8 +218,8 @@ class WebsocketHelper with ChangeNotifier {
             now.subtract(Duration(hours: 1)).toIso8601String(),
       );
 
-      debugPrint("$getToken token wsHelper");
-      debugPrint("${prefs.getString('lastRequest')} exp wsHelper");
+      // debugPrint("$getToken token wsHelper");
+      // debugPrint("${prefs.getString('lastRequest')} exp wsHelper");
 
       if (now.difference(lastRequest).inHours >= 1) {
         channel?.sink.add(json.encode(
@@ -207,6 +255,7 @@ class WebsocketHelper with ChangeNotifier {
 
       await for (final status in streamController.stream) {
         if (status['endpoint'] == "VERIFIKASI") {
+          notifyListeners();
           yield status['status'];
         }
       }
@@ -215,21 +264,11 @@ class WebsocketHelper with ChangeNotifier {
     }
   }
 
-  Stream<BorrowUser> checkUserHasBorrow() async* {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final getToken = prefs.getString('hasBorrow');
-
-    // for checker if user hast get granted for return items
-    grantedForReturnItem();
-
+  Stream<String> checkUserHasBorrow() async* {
     try {
-      DateTime now = DateTime.now();
-      DateTime lastRequest = DateTime.parse(
-        prefs.getString('lastRequest') ??
-            now.subtract(Duration(minutes: 1)).toIso8601String(),
-      );
-
-      if (now.difference(lastRequest).inMinutes >= 1) {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final getToken = prefs.getString('hasBorrow');
+      Future.delayed(Duration(seconds: 3), () {
         channel?.sink.add(json.encode(
           {
             "endpoint": "checkUserBorrow",
@@ -238,38 +277,42 @@ class WebsocketHelper with ChangeNotifier {
             }
           },
         ));
-
-        prefs.setString('lastRequest', now.toIso8601String());
-      }
-
-      DateTime nextRequest = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        now.hour,
-        now.minute + 1,
-      );
-      Duration delayed = nextRequest.difference(now);
-      Timer(
-        delayed,
-        () => channel?.sink.add(
-          json.encode(
-            {
-              "endpoint": "checkUserBorrow",
-              "data": {
-                "name": "rizan",
-              }
-            },
-          ),
-        ),
-      );
+      });
 
       await for (final status in streamController.stream) {
         if (status['endpoint'] == "CHECKUSER") {
-          final Map dataUser = status['message'];
-          for (var data in dataUser.values) {
+          final String dataUser = status['message'];
+          notifyListeners();
+          yield dataUser;
+        }
+      }
+    } catch (e, s) {
+      print(e);
+      debugPrint("$s strackTrace");
+    }
+  }
+
+  Stream<BorrowUser> userHasBorrows() async* {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final getToken = prefs.getString('hasBorrow');
+    print("$getToken user name");
+
+    try {
+      channel?.sink.add(json.encode(
+        {
+          "endpoint": "hasBorrow",
+          "data": {
+            "name": getToken ?? '',
+          }
+        },
+      ));
+
+      await for (final status in streamController.stream) {
+        if (status['endpoint'] == "HASBORROW") {
+          for (var data in status['message'].values) {
             if (data is Map) {
               final user = BorrowUser.from(data);
+              notifyListeners();
               yield user;
             }
           }
@@ -287,6 +330,7 @@ class WebsocketHelper with ChangeNotifier {
     await for (var map in streamController.stream) {
       if (map['endpoint'] == 'LOGIN') {
         data.addAll(map);
+        notifyListeners();
         yield data;
       }
     }
@@ -298,6 +342,7 @@ class WebsocketHelper with ChangeNotifier {
     await for (var map in streamController.stream) {
       if (map['endpoint'] == 'RIGISTER') {
         data.addAll(map);
+        notifyListeners();
         yield data;
       }
     }
@@ -321,7 +366,7 @@ class WebsocketHelper with ChangeNotifier {
             }
           }
         }
-
+        notifyListeners();
         yield list;
       }
     }
@@ -345,7 +390,7 @@ class WebsocketHelper with ChangeNotifier {
             }
           }
         }
-
+        notifyListeners();
         yield list;
       }
     }
@@ -369,7 +414,7 @@ class WebsocketHelper with ChangeNotifier {
             }
           }
         }
-
+        notifyListeners();
         yield list;
       }
     }
@@ -387,6 +432,7 @@ class WebsocketHelper with ChangeNotifier {
             final keyCategory = KeyCategoryList.fromJson(data['message'][i]);
             key.add(keyCategory);
           }
+          notifyListeners();
           return key;
         }
       }
@@ -415,7 +461,7 @@ class WebsocketHelper with ChangeNotifier {
             }
           }
         }
-
+        notifyListeners();
         yield data;
       }
     }
@@ -438,7 +484,7 @@ class WebsocketHelper with ChangeNotifier {
             }
           }
         }
-
+        notifyListeners();
         yield data;
       }
     }
