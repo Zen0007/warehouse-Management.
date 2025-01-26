@@ -4,7 +4,6 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:image_picker_for_web/image_picker_for_web.dart';
 import 'package:provider/provider.dart';
-import 'package:werehouse_inventory/fetch_socket.dart/api_login.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class AddItem extends StatefulWidget {
@@ -108,7 +107,7 @@ class _AddItemState extends State<AddItem> {
         },
       );
 
-      await for (var data in login(name, label)) {
+      await for (var data in wsHelper.streamController.stream) {
         if (data['endpoint'] == "NEWITEM") {
           if (data.containsKey("warning")) {
             if (!context.mounted) return;
