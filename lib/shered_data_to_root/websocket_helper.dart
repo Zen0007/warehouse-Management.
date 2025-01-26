@@ -76,21 +76,6 @@ class WebsocketHelper with ChangeNotifier {
     notifyListeners();
   }
 
-  void userHasBorrowsOnce() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final getToken = prefs.getString('hasBorrow');
-    print("$getToken user name");
-
-    channel?.sink.add(json.encode(
-      {
-        "endpoint": "hasBorrowOnce",
-        "data": {
-          "name": getToken ?? '',
-        }
-      },
-    ));
-  }
-
   void connect() async {
     try {
       broadCastStream = channel?.stream.asBroadcastStream();
@@ -294,7 +279,23 @@ class WebsocketHelper with ChangeNotifier {
     }
   }
 
-  Stream<BorrowUser> userHasBorrows() async* {
+// for first request
+  void userHasBorrowsOnce() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final getToken = prefs.getString('hasBorrow');
+    print("$getToken user name");
+
+    channel?.sink.add(json.encode(
+      {
+        "endpoint": "hasBorrowOnce",
+        "data": {
+          "name": getToken ?? '',
+        }
+      },
+    ));
+  }
+
+  Stream<BorrowUser> userHasBorrow() async* {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final getToken = prefs.getString('hasBorrow');
     print("$getToken user name");

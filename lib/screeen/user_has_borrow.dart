@@ -27,18 +27,6 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       final getToken = prefs.getString('hasBorrow');
-      Future.delayed(Duration(minutes: 5)).then(
-        (value) {
-          wsHelper.sendMessage(
-            {
-              "endpoint": "waitPermision",
-              "data": {
-                "name": getToken ?? "",
-              }
-            },
-          );
-        },
-      );
       wsHelper.sendMessage(
         {
           "endpoint": "waitPermision",
@@ -129,7 +117,7 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
               Consumer<WebsocketHelper>(
                 builder: (contex, wsHelper, child) {
                   return StreamBuilder(
-                    stream: wsHelper.userHasBorrows(),
+                    stream: wsHelper.userHasBorrow(),
                     builder: (context, snapshot) {
                       if (snapshot.hasData) {
                         if (snapshot.data != null) {
@@ -322,6 +310,7 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
                             },
                           );
                         } else {
+                          // if not have data return to firstscreen
                           return FirstScreen();
                         }
                       } else if (!snapshot.hasData) {

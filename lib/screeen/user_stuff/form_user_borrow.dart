@@ -106,12 +106,14 @@ class _FormForUserState extends State<FormForUser> {
             debugPrint("$warning waring");
             return;
           } else if (data.containsKey('message')) {
-            wsHelper.sendMessage({
-              "endpoint": "checkUserBorrow",
-              "data": {
-                "name": name,
-              }
-            }); // get data user
+            wsHelper.sendMessage(
+              {
+                "endpoint": "checkUserBorrow",
+                "data": {
+                  "name": name,
+                }
+              },
+            ); // get data user
 
             if (!context.mounted) return;
             final message = data['message'];
@@ -157,7 +159,7 @@ class _FormForUserState extends State<FormForUser> {
               backgroundColor: Theme.of(context).colorScheme.primary,
             ),
             onPressed: () {
-              wsHelper.userHasBorrowsOnce();
+              wsHelper.userHasBorrowsOnce(); //send request to database once
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
