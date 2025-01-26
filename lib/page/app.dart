@@ -17,7 +17,6 @@ class App extends StatelessWidget {
       darkTheme: ThemeColorPage.darkTheme,
       home: Consumer<WebsocketHelper>(
         builder: (context, wsHelper, child) {
-          wsHelper.userHasBorrows();
           /*
           check token user in local storage
           */
