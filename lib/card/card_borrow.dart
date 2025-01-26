@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:werehouse_inventory/dummy_data/decode.dart';
+import 'package:werehouse_inventory/data type/borrow_user.dart';
 
 class CardBorrow extends StatelessWidget {
   const CardBorrow({
