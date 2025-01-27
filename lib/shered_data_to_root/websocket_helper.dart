@@ -493,8 +493,6 @@ class WebsocketHelper with ChangeNotifier {
     }
   }
 
-  void freeGrantedIfPastOneYear() {}
-
   @override
   void dispose() {
     channel?.sink.close();
