@@ -115,6 +115,79 @@ class CardItem extends StatelessWidget {
     }
   }
 
+  void deletedItem(BuildContext context, WebsocketHelper wsHelper) async {
+    wsHelper.sendMessage({
+      'endpoint': "deleteItem",
+      'data': {
+        'category': data.category,
+        'index': data.index,
+      }
+    });
+
+    await for (var status in wsHelper.streamController.stream) {
+      if (status['endpoint'] == "DELETEITEM") {
+        if (status.containsKey('message')) {
+          messages(
+            context,
+            'MESSAGE',
+            status['message'],
+            Theme.of(context).colorScheme.onSecondary,
+            Theme.of(context).colorScheme.secondary,
+          );
+
+          return;
+        } else {
+          messages(
+            context,
+            'WARNING',
+            status['warning'],
+            Theme.of(context).colorScheme.onError,
+            Theme.of(context).colorScheme.error,
+          );
+        }
+      }
+    }
+  }
+
+  Row buttonDeletedItem(BuildContext context, WebsocketHelper wsHelper) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        IconButton(
+          onPressed: () {
+            deletedItem(context, wsHelper);
+          },
+          style: IconButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+          ),
+          icon: Icon(
+            Icons.bookmark_add_outlined,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Row buttonAddChoiceUser(BuildContext context, WebsocketHelper wsHelper) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        IconButton(
+          onPressed: () {
+            store(data.category, data.index, data.name, data.label);
+            updateStatus(context, wsHelper);
+          },
+          style: IconButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+          ),
+          icon: Icon(
+            Icons.bookmark_add_outlined,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -217,38 +290,26 @@ class CardItem extends StatelessWidget {
                 )
               ],
             ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 5, right: 6),
+            child: Consumer<WebsocketHelper>(
+              builder: (context, wsHelper, child) {
+                return buttonAddChoiceUser(context, wsHelper);
+              },
+            ),
+          ),
           Spacer(),
           if (isUser)
             Padding(
               padding: const EdgeInsets.only(bottom: 5, right: 6),
               child: Consumer<WebsocketHelper>(
                 builder: (context, wsHelper, child) {
-                  return button(context, wsHelper);
+                  return buttonAddChoiceUser(context, wsHelper);
                 },
               ),
             )
         ],
       ),
-    );
-  }
-
-  Row button(BuildContext context, WebsocketHelper wsHelper) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        IconButton(
-          onPressed: () {
-            store(data.category, data.index, data.name, data.label);
-            updateStatus(context, wsHelper);
-          },
-          style: IconButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-          ),
-          icon: Icon(
-            Icons.bookmark_add_outlined,
-          ),
-        ),
-      ],
     );
   }
 }
