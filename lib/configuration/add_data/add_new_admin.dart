@@ -35,6 +35,11 @@ class _AddNewAdminState extends State<AddNewAdmin> {
       await Future.delayed(
         Duration(seconds: 5),
         () {
+          setState(
+            () {
+              isLoding = false;
+            },
+          );
           _fromKey.currentState!.reset();
         },
       );
@@ -63,15 +68,39 @@ class _AddNewAdminState extends State<AddNewAdmin> {
         if (data['endpoint'] == "RIGISTER") {
           if (data.containsKey("warning")) {
             final warning = data['warning'];
-            if (!context.mounted) return;
-            alertDialog(context, warning);
 
-            debugPrint("$warning waring");
-            return;
-          } else if (data.containsKey('message')) {
             if (!context.mounted) return;
+            messageFromServer(
+              warning,
+              false,
+              Theme.of(context).colorScheme.error,
+            );
+
+            setState(
+              () {
+                isLoding = false;
+              },
+            );
+            _fromKey.currentState!.reset();
+
+            return;
+          }
+          if (data.containsKey('message')) {
             final message = data['message'];
-            message(context, message);
+            if (!context.mounted) return;
+
+            messageFromServer(
+              message,
+              true,
+              Theme.of(context).colorScheme.surface,
+            );
+
+            setState(
+              () {
+                isLoding = false;
+              },
+            );
+            _fromKey.currentState!.reset();
           }
         }
       }
@@ -80,13 +109,13 @@ class _AddNewAdminState extends State<AddNewAdmin> {
     }
   }
 
-  Future<dynamic> message(BuildContext context, message) {
+  Future<dynamic> messageFromServer(message, bool isMessage, Color color) {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog.adaptive(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+        backgroundColor: color,
         title: Text(
-          'MESSAGE',
+          isMessage ? 'MESSAGE' : "WARNING",
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSecondary,
             fontWeight: FontWeight.w500,
@@ -104,55 +133,11 @@ class _AddNewAdminState extends State<AddNewAdmin> {
             style: TextButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.secondary,
             ),
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              "Yes",
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onError,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<dynamic> alertDialog(BuildContext context, warning) {
-    return showDialog(
-      context: context,
-      builder: (context) => AlertDialog.adaptive(
-        backgroundColor: Theme.of(context).colorScheme.error,
-        title: Text(
-          "WARNING",
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onError,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        content: Text(
-          "$warning",
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onError,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        actions: [
-          TextButton(
-            style: TextButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.secondary,
-            ),
             onPressed: () {
               Navigator.pop(context);
-              Future.delayed(
-                Duration(seconds: 1),
+              setState(
                 () {
-                  _fromKey.currentState!.reset();
-                  setState(
-                    () {
-                      isLoding = false;
-                    },
-                  );
+                  isLoding = false;
                 },
               );
             },
@@ -171,16 +156,19 @@ class _AddNewAdminState extends State<AddNewAdmin> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        debugPrint("${constraints.maxWidth}");
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          debugPrint("${constraints.maxWidth}");
 
-        if (constraints.maxWidth < 800) {
-          return mobile(context, constraints);
-        } else {
-          return desktop(context, constraints);
-        }
-      },
+          if (constraints.maxWidth < 800) {
+            return mobile(context, constraints);
+          } else {
+            return desktop(context, constraints);
+          }
+        },
+      ),
     );
   }
 
