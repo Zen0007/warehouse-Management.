@@ -9,6 +9,7 @@ class CardItem extends StatelessWidget {
     super.key,
     required this.data,
     required this.imageSize,
+    required this.callback,
   }) : isUser = false;
 
   const CardItem.forUser({
@@ -16,19 +17,15 @@ class CardItem extends StatelessWidget {
     required this.data,
     required this.imageSize,
     required this.isUser,
-  });
+  }) : callback = null;
 
   final Index data;
   final double imageSize;
   final bool isUser;
+  final VoidCallback? callback;
 
   Future<void> store(
-    String category,
-    String index,
-    String name,
-    String label,
-  ) async {
-    // await StoredUserChoice().delete();
+      String category, String index, String name, String label) async {
     await StoredUserChoice().addNewMapToSharedPreferences(
       {
         "category": category,
@@ -39,17 +36,17 @@ class CardItem extends StatelessWidget {
     );
     final dataShow = await StoredUserChoice().getListFromSharedPreferences();
 
-    debugPrint("$dataShow data");
+    debugPrint("$dataShow data carditem");
   }
 
-  Future<dynamic> messages(BuildContext context, String message,
+  Future<dynamic> messages(BuildContext context, bool isMessage,
       String response, Color color, Color backgroundColor) {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog.adaptive(
         backgroundColor: backgroundColor,
         title: Text(
-          message,
+          isMessage ? "MESSAGE" : "WARNING",
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.w500,
@@ -63,11 +60,11 @@ class CardItem extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton(
-            style: TextButton.styleFrom(
-              backgroundColor: backgroundColor,
-            ),
-            onPressed: () => Navigator.pop(context),
+          OutlinedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              callback;
+            },
             child: Text(
               "Yes",
               style: TextStyle(
@@ -93,19 +90,22 @@ class CardItem extends StatelessWidget {
     await for (var status in wsHelper.streamController.stream) {
       if (status['endpoint'] == "UPDATESTATUSITEM") {
         if (status.containsKey('message')) {
+          if (!context.mounted) return;
+
           messages(
             context,
-            'MESSAGE',
+            true,
             status['message'],
             Theme.of(context).colorScheme.onSecondary,
-            Theme.of(context).colorScheme.secondary,
+            Theme.of(context).colorScheme.surface,
           );
 
           return;
         } else {
+          if (!context.mounted) return;
           messages(
             context,
-            'WARNING',
+            false,
             status['warning'],
             Theme.of(context).colorScheme.onError,
             Theme.of(context).colorScheme.error,
@@ -127,19 +127,20 @@ class CardItem extends StatelessWidget {
     await for (var status in wsHelper.streamController.stream) {
       if (status['endpoint'] == "DELETEITEM") {
         if (status.containsKey('message')) {
+          if (!context.mounted) return;
           messages(
             context,
-            'MESSAGE',
+            true,
             status['message'],
-            Theme.of(context).colorScheme.onSecondary,
-            Theme.of(context).colorScheme.secondary,
+            Theme.of(context).colorScheme.onSurface,
+            Theme.of(context).colorScheme.surface,
           );
-
           return;
         } else {
+          if (!context.mounted) return;
           messages(
             context,
-            'WARNING',
+            true,
             status['warning'],
             Theme.of(context).colorScheme.onError,
             Theme.of(context).colorScheme.error,
@@ -147,25 +148,6 @@ class CardItem extends StatelessWidget {
         }
       }
     }
-  }
-
-  Row buttonDeletedItem(BuildContext context, WebsocketHelper wsHelper) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        IconButton(
-          onPressed: () {
-            deletedItem(context, wsHelper);
-          },
-          style: IconButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-          ),
-          icon: Icon(
-            Icons.bookmark_add_outlined,
-          ),
-        ),
-      ],
-    );
   }
 
   Row buttonAddChoiceUser(BuildContext context, WebsocketHelper wsHelper) {
@@ -195,31 +177,51 @@ class CardItem extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            margin: const EdgeInsets.only(
-              top: 10,
-              bottom: 8,
-            ),
-            decoration: BoxDecoration(
-              boxShadow: const [
-                BoxShadow(
-                  // color: Theme.of(context).colorScheme.primary,
-                  blurRadius: 10,
-                  offset: Offset(0, 10),
+          if (data.image.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(
+                top: 10,
+                bottom: 8,
+              ),
+              decoration: BoxDecoration(
+                boxShadow: const [
+                  BoxShadow(
+                    // color: Theme.of(context).colorScheme.primary,
+                    blurRadius: 10,
+                    offset: Offset(0, 10),
+                  ),
+                ],
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.memory(
+                  data.image,
+                  height: imageSize * 0.65,
+                  width: imageSize * 0.8,
+                  fit: BoxFit.cover,
                 ),
-              ],
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.memory(
-                data.image,
-                height: imageSize * 0.65,
-                width: imageSize * 0.8,
-                fit: BoxFit.cover,
+              ),
+            )
+          else
+            Container(
+              height: imageSize * 0.65,
+              width: imageSize * 0.8,
+              margin: const EdgeInsets.only(
+                top: 10,
+                bottom: 8,
+              ),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.image_not_supported_outlined,
+                  size: 50,
+                ),
               ),
             ),
-          ),
           const SizedBox(
             height: 10,
           ),
@@ -291,14 +293,30 @@ class CardItem extends StatelessWidget {
               ],
             ),
           Padding(
-            padding: const EdgeInsets.only(bottom: 5, right: 6),
+            padding: const EdgeInsets.only(top: 15, right: 6),
             child: Consumer<WebsocketHelper>(
               builder: (context, wsHelper, child) {
-                return buttonAddChoiceUser(context, wsHelper);
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        deletedItem(context, wsHelper);
+                      },
+                      style: IconButton.styleFrom(
+                        backgroundColor:
+                            Theme.of(context).colorScheme.secondary,
+                      ),
+                      icon: Icon(
+                        Icons.remove_circle_outline,
+                        size: 30,
+                      ),
+                    ),
+                  ],
+                );
               },
             ),
           ),
-          Spacer(),
           if (isUser)
             Padding(
               padding: const EdgeInsets.only(bottom: 5, right: 6),
