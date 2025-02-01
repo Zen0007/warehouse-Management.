@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:werehouse_inventory/data type/borrow_user.dart';
@@ -8,11 +8,12 @@ import 'package:werehouse_inventory/data%20type/index.dart';
 import 'package:werehouse_inventory/data%20type/key_category_list.dart';
 
 class WebsocketHelper with ChangeNotifier {
+  WebSocketChannel? channel;
   WebsocketHelper(this.channel) {
     connect();
+    grantedForReturnItem();
   }
 
-  WebSocketChannel? channel;
   final StreamController<Map> streamController =
       StreamController<Map>.broadcast();
   Stream? broadCastStream;
@@ -22,7 +23,6 @@ class WebsocketHelper with ChangeNotifier {
 
   void getDataBorrow() {
     channel?.sink.add(json.encode({"endpoint": "getDataBorrow"}));
-    notifyListeners();
   }
 
   void getDataBorrowOnce() {
@@ -32,7 +32,6 @@ class WebsocketHelper with ChangeNotifier {
 
   void getDataCategoryUser() {
     channel?.sink.add(json.encode({"endpoint": "getDataCollectionAvaileble"}));
-    notifyListeners();
   }
 
   void getDataCategoryUserOnce() {
@@ -43,7 +42,6 @@ class WebsocketHelper with ChangeNotifier {
 
   void getDataAllCollection() {
     channel?.sink.add(json.encode({"endpoint": "getDataAllCollection"}));
-    notifyListeners();
   }
 
   void getDataAllCollectionOnce() {
@@ -53,7 +51,6 @@ class WebsocketHelper with ChangeNotifier {
 
   void getDataPending() {
     channel?.sink.add(json.encode({"endpoint": "getDataPending"}));
-    notifyListeners();
   }
 
   void getDataPendingOnce() {
@@ -63,12 +60,15 @@ class WebsocketHelper with ChangeNotifier {
 
   void getAllKeyCategory() {
     channel?.sink.add(json.encode({"endpoint": "getAllKeyCategory"}));
+  }
+
+  void getAllKeyCategoryOnce() {
+    channel?.sink.add(json.encode({"endpoint": "getAllKeyCategoryOnce"}));
     notifyListeners();
   }
 
   void getDataGranted() {
     channel?.sink.add(json.encode({"endpoint": "getDataGranted"}));
-    notifyListeners();
   }
 
   void getDataGrantedOnce() {
@@ -76,13 +76,17 @@ class WebsocketHelper with ChangeNotifier {
     notifyListeners();
   }
 
+  static Map jsonDecodes(dynamic jsons) {
+    return json.decode(jsons);
+  }
+
   void connect() async {
     try {
       broadCastStream = channel?.stream.asBroadcastStream();
-      notifyListeners();
       broadCastStream?.listen(
-        (message) {
-          final streamData = json.decode(message);
+        (message) async {
+          // process code in another thread
+          final streamData = await compute(jsonDecodes, message);
           notifyListeners();
 
           streamController.sink.add(streamData);
@@ -91,26 +95,22 @@ class WebsocketHelper with ChangeNotifier {
           print('connection close ');
 
           isConnected = false;
-          notifyListeners();
           reconnet();
         },
         onError: (e) {
           print(e);
 
           isConnected = false;
-          notifyListeners();
           reconnet();
         },
       );
 
       isConnected = true;
-      notifyListeners();
     } catch (e, s) {
       debugPrint("$e");
       debugPrint("$s");
 
       isConnected = false;
-      notifyListeners();
       reconnet();
     }
   }
@@ -123,7 +123,6 @@ class WebsocketHelper with ChangeNotifier {
       _reconnectTimer = null;
       broadCastStream = null;
       isConnected = false;
-      notifyListeners();
     }
   }
 
@@ -136,6 +135,7 @@ class WebsocketHelper with ChangeNotifier {
           () {
             print("attempting to reconnect .....");
             connect();
+            notifyListeners();
           },
         );
       }
@@ -146,6 +146,7 @@ class WebsocketHelper with ChangeNotifier {
           () {
             print("attempting to reconnect .....");
             connect();
+            notifyListeners();
           },
         );
       }
@@ -176,7 +177,6 @@ class WebsocketHelper with ChangeNotifier {
     channel?.sink.add(
       json.encode(message),
     );
-    notifyListeners();
   }
 
   void sendRequestReturnItem() async {
@@ -429,73 +429,128 @@ class WebsocketHelper with ChangeNotifier {
 
       await for (var data in streamController.stream) {
         if (data['endpoint'] == "GETDATAALLKEYCATEGORY") {
-          for (var i = 0; i < data['message'].length; i++) {
-            print("${streamController.stream} stream");
-            print('${data} data stream ');
-            final keyCategory = KeyCategoryList.fromJson(data['message'][i]);
-            key.add(keyCategory);
-          }
-          notifyListeners();
-          return key;
+          final keyData = await compute(processMessageKeyToIsolate, data);
+          return keyData;
         }
       }
-      return [];
+      return key;
     } catch (e, s) {
       print(e);
       print(s);
-      return [];
+      throw Exception('$e');
     }
   }
 
-  Stream<List<Index>> indexCategoryForUser(String title) async* {
-    List<Index> data = [];
+  List<KeyCategoryList> processMessageKeyToIsolate(Map data) {
+    List<KeyCategoryList> key = [];
+    for (var i = 0; i < data['message'].length; i++) {
+      final keyCategory = KeyCategoryList.fromJson(data['message'][i]);
+      key.add(keyCategory);
+    }
 
+    notifyListeners();
+    return key;
+  }
+
+  Stream<List<Index>> indexCategoryForUser(String title) async* {
     await for (var index in streamController.stream) {
       if (index['endpoint'] == "GETDATACATEGORYAVAILEBLE") {
         if (index['message'].isEmpty) {
           yield [];
         }
-
         for (var i = 0; i < index['message'].length; i++) {
           if (index['message'][i][title] != null) {
-            for (var entry in index['message'][i][title].entries) {
-              final index = Index.fromJson(entry.value, entry.key, title);
-              data.add(index);
-            }
+            final List<Index> data = await compute(
+              processMessageToIsolate,
+              {
+                'message': index['message'][i][title],
+                "title": title,
+              },
+            );
+            notifyListeners();
+            yield data;
           }
         }
-        notifyListeners();
-        yield data;
       }
     }
   }
 
   Stream<List<Index>> indexCategoryForAdmin(String title) async* {
-    final List<Index> data = [];
-
     await for (var index in streamController.stream) {
       if (index['endpoint'] == "GETDATAALLCATEGORY") {
-        if (index['message'].isEmpty) {
-          yield [];
-        }
-
         for (var i = 0; i < index['message'].length; i++) {
           if (index['message'][i][title] != null) {
-            for (var entry in index['message'][i][title].entries) {
-              final index = Index.fromJson(entry.value, entry.key, title);
-              data.add(index);
-            }
+            final List<Index> data = await compute(
+              processMessageToIsolate,
+              {
+                'message': index['message'][i][title],
+                "title": title,
+              },
+            );
+
+            yield data;
+            notifyListeners();
           }
         }
-        notifyListeners();
-        yield data;
       }
     }
+    notifyListeners();
+  }
+
+  static List<Index> processMessageKeyInIsolate(List message) {
+    final title = message[0];
+    final index = message[1];
+    final List<Index> resultData = [];
+
+    if (index['message'].isEmpty) {
+      return resultData;
+    }
+    for (var i = 0; i < index['message'].length; i++) {
+      if (index['message'][i][title] != null) {
+        for (var entry in index['message'][i][title].entries) {
+          final List<int> listInt =
+              List<int>.from(entry.value['image'] as List);
+
+          final Uint8List uint8list = Uint8List.fromList(listInt);
+
+          final index =
+              Index.fromJson(entry.value, entry.key, title, uint8list);
+          resultData.add(index);
+        }
+
+        return resultData;
+      }
+    }
+
+    return resultData;
+  }
+
+  List<Index> processMessageToIsolate(Map map) {
+    final dynamic index = map['message'];
+    final String title = map['title'];
+    final List<Index> data = [];
+    for (var entry in index.entries) {
+      final List<int> listInt = List<int>.from(entry.value['image'] as List);
+      final Uint8List uint8list = Uint8List.fromList(listInt);
+
+      final index = Index.fromJson(entry.value, entry.key, title, uint8list);
+      data.add(index);
+    }
+    return data;
+  }
+
+  Uint8List imageProcess(dynamic image) {
+    final List<int> listInt = List<int>.from(image as List);
+    final Uint8List uint8list = Uint8List.fromList(listInt);
+
+    return uint8list;
   }
 
   @override
   void dispose() {
     channel?.sink.close();
+    streamController.close();
+    _reconnectTimer!.cancel();
     super.dispose();
   }
 }
