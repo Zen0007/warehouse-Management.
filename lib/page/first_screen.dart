@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werehouse_inventory/auth/login.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
-import 'package:werehouse_inventory/screeen/user_stuff/list_category_user.dart';
+import 'package:werehouse_inventory/screeen/user_stuff/list_key_category.dart';
 
 class FirstScreen extends StatefulWidget {
   const FirstScreen({super.key});
@@ -93,7 +93,7 @@ class _MiddleScreenState extends State<FirstScreen> {
                         ),
                       ),
                       onTap: () {
-                        wsHelper.getAllKeyCategory();
+                        wsHelper.getAllKeyCategoryOnce();
                         Navigator.push(
                           context,
                           MaterialPageRoute(
