@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_picker_for_web/image_picker_for_web.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:werehouse_inventory/screeen/user_has_borrow.dart';
+import 'package:werehouse_inventory/screeen/admin_stuff/user_has_borrow.dart';
 import 'package:werehouse_inventory/shered_data_to_root/shared_preferences.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
@@ -55,7 +55,7 @@ class _FormForUserState extends State<FormForUser> {
   void sumbit(BuildContext context, WebsocketHelper wsHelper) async {
     try {
       final validate = _fromKey.currentState!.validate();
-      print("$validate validation");
+
       if (!validate) {
         await Future.delayed(
           Duration(seconds: 5),
@@ -79,7 +79,7 @@ class _FormForUserState extends State<FormForUser> {
       }
       final listChoiceUser =
           await StoredUserChoice().getListFromSharedPreferences();
-      print("$listChoiceUser ---------------------------");
+      debugPrint("$listChoiceUser form user---------------------------");
       wsHelper.sendMessage(
         {
           "endpoint": "borrowing",
@@ -101,9 +101,19 @@ class _FormForUserState extends State<FormForUser> {
             final warning = data['warning'];
 
             if (!context.mounted) return;
-            alertDialog(context, warning);
+            alertDialog(warning);
 
-            debugPrint("$warning waring");
+            Future.delayed(
+              Duration(seconds: 1),
+              () {
+                _fromKey.currentState!.reset();
+                setState(
+                  () {
+                    isLoding = false;
+                  },
+                );
+              },
+            );
             return;
           } else if (data.containsKey('message')) {
             wsHelper.sendMessage(
@@ -115,27 +125,25 @@ class _FormForUserState extends State<FormForUser> {
               },
             ); // get data user
 
-            if (!context.mounted) return;
-            final message = data['message'];
             final prefs = await SharedPreferences.getInstance();
 
             prefs.setString('hasBorrow', name);
             prefs.remove("choice");
 
             if (!context.mounted) return;
-            messages(context, message, wsHelper);
+            messages(wsHelper);
           }
         }
       }
     } catch (e, s) {
-      debugPrint("$e");
-      print("$s from user");
+      debugPrint("$e form user");
+      debugPrint("$s from user");
     }
   }
 
-  Future<dynamic> messages(
-      BuildContext context, message, WebsocketHelper wsHelper) {
+  Future<dynamic> messages(WebsocketHelper wsHelper) {
     return showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (context) => AlertDialog.adaptive(
         backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -147,7 +155,7 @@ class _FormForUserState extends State<FormForUser> {
           ),
         ),
         content: Text(
-          "$message",
+          "Barang yang anda pinjam sudah dapat di ambil",
           style: TextStyle(
             color: Theme.of(context).colorScheme.onPrimary,
             fontWeight: FontWeight.w600,
@@ -159,7 +167,6 @@ class _FormForUserState extends State<FormForUser> {
               backgroundColor: Theme.of(context).colorScheme.primary,
             ),
             onPressed: () {
-              wsHelper.userHasBorrowsOnce(); //send request to database once
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
@@ -168,6 +175,7 @@ class _FormForUserState extends State<FormForUser> {
                   },
                 ),
               );
+              wsHelper.userHasBorrowsOnce(); //send request to database once
             },
             child: Text(
               "Yes",
@@ -182,7 +190,7 @@ class _FormForUserState extends State<FormForUser> {
     );
   }
 
-  Future<dynamic> alertDialog(BuildContext context, warning) {
+  Future<dynamic> alertDialog(warning) {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog.adaptive(
@@ -208,17 +216,6 @@ class _FormForUserState extends State<FormForUser> {
             ),
             onPressed: () {
               Navigator.pop(context);
-              Future.delayed(
-                Duration(seconds: 1),
-                () {
-                  _fromKey.currentState!.reset();
-                  setState(
-                    () {
-                      isLoding = false;
-                    },
-                  );
-                },
-              );
             },
             child: Text(
               "Yes",
