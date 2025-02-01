@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:werehouse_inventory/configuration/delete/controler_service_deleted.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class DeleteCategory extends StatefulWidget {
@@ -10,7 +11,6 @@ class DeleteCategory extends StatefulWidget {
 }
 
 class _AddItemState extends State<DeleteCategory> {
-  final GlobalKey<FormState> _fromKey = GlobalKey<FormState>();
   final textField = FocusNode();
   bool isLoding = false;
   bool obscureText = true;
@@ -43,19 +43,6 @@ class _AddItemState extends State<DeleteCategory> {
   }
 
   void sumbit(BuildContext context, WebsocketHelper wsHelper) async {
-    final validate = _fromKey.currentState!.validate();
-
-    if (!validate) {
-      await Future.delayed(
-        Duration(seconds: 5),
-        () {
-          _fromKey.currentState!.reset();
-        },
-      );
-      return;
-    }
-    _fromKey.currentState!.save();
-
     try {
       setState(
         () {
@@ -78,14 +65,39 @@ class _AddItemState extends State<DeleteCategory> {
       );
 
       await for (var data in wsHelper.streamController.stream) {
-        if (data['endpoint'] == "NEWITEM") {
+        if (data['endpoint'] == "DELETECATEGORY") {
           if (data.containsKey("warning")) {
+            final warning = data['message'];
+
             if (!context.mounted) return;
+            messageFromServer(
+              warning,
+              true,
+              Theme.of(context).colorScheme.error,
+            );
+            setState(
+              () {
+                isLoding = false;
+              },
+            );
+
             return;
-          } else if (data.containsKey('message')) {
-            if (!context.mounted) return;
+          }
+          if (data.containsKey('message')) {
             final message = data['message'];
-            message(context, message);
+
+            if (!context.mounted) return;
+            messageFromServer(
+              message,
+              true,
+              Theme.of(context).colorScheme.surface,
+            );
+            setState(
+              () {
+                isLoding = false;
+                valueDropDown = null;
+              },
+            );
           }
         }
       }
@@ -94,17 +106,83 @@ class _AddItemState extends State<DeleteCategory> {
     }
   }
 
+  Future<dynamic> messageFromServer(message, bool isMessage, Color color) {
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog.adaptive(
+        backgroundColor: color,
+        title: Text(
+          isMessage ? 'MESSAGE' : 'WARNING',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        content: Text(
+          "$message",
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.secondary,
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+
+              setState(
+                () {
+                  isLoding = false;
+                },
+              );
+            },
+            child: Text(
+              "Yes",
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onError,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        debugPrint('${constraints.maxWidth} screen');
-        if (constraints.maxWidth < 880) {
-          return smallScreen(constraints, context);
-        } else {
-          return largeScreen(constraints, context);
-        }
-      },
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          debugPrint('${constraints.maxWidth} screen');
+          if (constraints.maxWidth < 880) {
+            return smallScreen(constraints, context);
+          } else {
+            return largeScreen(constraints, context);
+          }
+        },
+      ),
+      floatingActionButton: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Theme.of(context).colorScheme.secondary,
+        ),
+        onPressed: () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ControllerServiceDeleted(),
+            ),
+          );
+        },
+        child: Icon(
+          Icons.arrow_back_ios,
+          color: Colors.white,
+        ),
+      ),
     );
   }
 
@@ -115,12 +193,16 @@ class _AddItemState extends State<DeleteCategory> {
           padding: EdgeInsets.only(
             right: constraints.maxWidth * 0.2,
             left: constraints.maxWidth * 0.2,
+            top: constraints.maxWidth * 0.3,
             bottom: 10,
           ),
           child: FormField(
             builder: (FormFieldState<String> state) {
               return Consumer<WebsocketHelper>(
                 builder: (context, wsHelper, child) {
+                  // listen database
+                  wsHelper.getAllKeyCategory();
+
                   return FutureBuilder(
                     future: wsHelper.keyCategory(),
                     builder: (context, snapshot) {
@@ -128,7 +210,19 @@ class _AddItemState extends State<DeleteCategory> {
                         return Center(
                           child: CircularProgressIndicator.adaptive(),
                         );
-                      } else if (snapshot.hasData) {
+                      } else if (snapshot.data!.isEmpty) {
+                        return Center(
+                          child: ListTile(
+                            title: Text(
+                              "Daftar category kosong ",
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      if (snapshot.hasData) {
                         return InputDecorator(
                           decoration: InputDecoration(
                             labelStyle: TextStyle(
@@ -271,19 +365,36 @@ class _AddItemState extends State<DeleteCategory> {
           padding: EdgeInsets.only(
             right: constraints.maxWidth * 0.3,
             left: constraints.maxWidth * 0.3,
+            top: constraints.maxWidth * 0.3,
             bottom: 10,
           ),
           child: FormField(builder: (FormFieldState<String> state) {
             return Consumer<WebsocketHelper>(
               builder: (context, wsHelper, child) {
+                // listen database
+                wsHelper.getAllKeyCategory();
+
                 return FutureBuilder(
                   future: wsHelper.keyCategory(),
                   builder: (context, snapshot) {
+                    print(snapshot.data);
                     if (!snapshot.hasData) {
                       return Center(
                         child: CircularProgressIndicator.adaptive(),
                       );
-                    } else if (snapshot.hasData) {
+                    } else if (snapshot.data!.isEmpty) {
+                      return Center(
+                        child: ListTile(
+                          title: Text(
+                            "Daftar category kosong ",
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    if (snapshot.hasData) {
                       return InputDecorator(
                         decoration: InputDecoration(
                           labelStyle: TextStyle(
