@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:werehouse_inventory/page/first_screen.dart';
-import 'package:werehouse_inventory/screeen/user_stuff/category_user.dart';
+import 'package:werehouse_inventory/screeen/user_stuff/each_category.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class UserHasBorrows extends StatefulWidget {
