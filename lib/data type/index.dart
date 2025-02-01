@@ -16,17 +16,16 @@ class Index {
   String index;
   String category;
 
-  factory Index.fromJson(
-      Map<String, dynamic> jsons, String index, String category) {
-    final List<int> listInt = List<int>.from(jsons['image'] as List);
-    final Uint8List intList = Uint8List.fromList(listInt);
+  factory Index.fromJson(Map<String, dynamic> jsons, String index,
+      String category, Uint8List imageList) {
     return Index(
-        name: jsons['name'],
-        status: jsons['status'],
-        label: jsons['Label'],
-        image: intList,
-        index: index,
-        category: category);
+      name: jsons['name'],
+      status: jsons['status'],
+      label: jsons['Label'],
+      image: imageList,
+      index: index,
+      category: category,
+    );
   }
 
   Map<String, dynamic> toJson() => {
