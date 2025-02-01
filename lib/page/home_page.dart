@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:werehouse_inventory/configuration/add_data/screen_service.dart';
-import 'package:werehouse_inventory/configuration/delete/controler_service.dart';
+import 'package:werehouse_inventory/configuration/add_data/controler_service_add.dart';
+import 'package:werehouse_inventory/configuration/delete/controler_service_deleted.dart';
 import 'package:werehouse_inventory/page/first_screen.dart';
-import 'package:werehouse_inventory/screeen/borrow.dart';
-import 'package:werehouse_inventory/screeen/grantend_user.dart';
-import 'package:werehouse_inventory/screeen/user_stuff/list_key_category.dart';
-import 'package:werehouse_inventory/screeen/category_admin.dart';
-import 'package:werehouse_inventory/screeen/pending_user.dart';
+import 'package:werehouse_inventory/screeen/admin_stuff/borrow.dart';
+import 'package:werehouse_inventory/screeen/admin_stuff/grantend_user.dart';
+import 'package:werehouse_inventory/screeen/user_stuff/grid_for_key.dart';
+import 'package:werehouse_inventory/screeen/admin_stuff/category_admin.dart';
+import 'package:werehouse_inventory/screeen/admin_stuff/pending_user.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class HomePage extends StatelessWidget {
@@ -20,10 +20,61 @@ class HomePage extends StatelessWidget {
   void selectCategory(BuildContext context, String title) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => ScreenCategoryAdmin(
+        builder: (context) => CategoryAdmin(
           title: title,
         ),
       ),
+    );
+  }
+
+  Future<String?> nameAdmin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? name = prefs.getString("adminName");
+
+    return name;
+  }
+
+  Future<dynamic> detailAdmin(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? name = prefs.getString("adminName");
+
+    if (!context.mounted) {
+      return;
+    }
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return Stack(
+          children: [
+            Positioned(
+              top: 50,
+              right: 10,
+              child: Container(
+                width: 150,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                padding: EdgeInsets.only(
+                  left: 5,
+                  right: 5,
+                ),
+                child: Center(
+                  child: Text(
+                    "Name : $name",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      decoration: TextDecoration.none,
+                    ),
+                  ),
+                ),
+              ),
+            )
+          ],
+        );
+      },
     );
   }
 
@@ -50,16 +101,9 @@ class HomePage extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () => detailAdmin(context),
             icon: Icon(
-              color: Theme.of(context).colorScheme.onPrimary,
               Icons.person,
-            ),
-          ),
-          Text(
-            "name admin",
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onPrimary,
             ),
           ),
           const SizedBox(
@@ -106,7 +150,7 @@ class HomePage extends StatelessWidget {
                       onExpansionChanged: (value) {
                         if (value) {
                           // send request to ws
-                          wsHelper.getAllKeyCategory();
+                          wsHelper.getAllKeyCategoryOnce();
                         }
                       },
                       children: [
@@ -115,9 +159,27 @@ class HomePage extends StatelessWidget {
                           builder: (context, snapshot) {
                             if (!snapshot.hasData) {
                               return Center(
-                                child: CircularProgressIndicator.adaptive(),
+                                child: Padding(
+                                  padding: EdgeInsets.only(left: 5, right: 15),
+                                  child: LinearProgressIndicator(),
+                                ),
                               );
-                            } else if (snapshot.hasData) {
+                            }
+                            if (snapshot.hasData) {
+                              if (snapshot.data!.isEmpty) {
+                                return Center(
+                                  child: ListTile(
+                                    title: Text(
+                                      "Daftar category kosong ",
+                                      style: TextStyle(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
                               return Column(
                                 children: [
                                   if (snapshot.data!.isNotEmpty) ...[
@@ -125,13 +187,14 @@ class HomePage extends StatelessWidget {
                                       ListCategory(
                                         category: data.key,
                                         onSelectCategory: () {
+                                          // get all data for admin
+                                          wsHelper.getDataAllCollectionOnce();
                                           selectCategory(
                                             context,
                                             data.key,
                                           );
 
-                                          // get all data for admin
-                                          wsHelper.getDataAllCollectionOnce();
+                                          print("is Press");
                                         },
                                       ),
                                   ] else
@@ -193,7 +256,7 @@ class HomePage extends StatelessWidget {
                             builder: (context) => const PendingUser(),
                           ),
                         );
-                        wsHelper.getDataPendingOnce();
+                        wsHelper.getDataPendingOnce(); // send request to ws
                       },
                     ),
                     ListTile(
@@ -235,37 +298,79 @@ class HomePage extends StatelessWidget {
                         ListTile(
                           leading: Icon(
                             color: Theme.of(context).colorScheme.onPrimary,
-                            Icons.adjust_sharp,
+                            Icons.circle_outlined,
                           ),
                           title: Text(
-                            "add",
+                            "Controller insert ",
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ControllerService(),
-                            ),
-                          ),
+                          onTap: () {
+                            wsHelper.getAllKeyCategoryOnce();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ControllerService(),
+                              ),
+                            );
+                          },
                         ),
                         ListTile(
                           leading: Icon(
                             color: Theme.of(context).colorScheme.onPrimary,
-                            Icons.adjust_sharp,
+                            Icons.circle_outlined,
                           ),
                           title: Text(
-                            "delete",
+                            "Controller delete",
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
                                 builder: (context) =>
-                                    const ControllerServiceDelete()),
+                                    const ControllerServiceDeleted(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            right: 10,
+                            top: 15,
+                            bottom: 15,
+                          ),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.secondary,
+                            ),
+                            onPressed: () async {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => FirstScreen(),
+                                ),
+                              );
+                              final prefs =
+                                  await SharedPreferences.getInstance();
+                              prefs.remove("token");
+                              debugPrint('${prefs.getString('token')}  token');
+                            },
+                            child: Text(
+                              'logout',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -274,32 +379,11 @@ class HomePage extends StatelessWidget {
                 );
               },
             ),
-            Positioned(
-              bottom: 10,
-              right: 10,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.secondary,
-                ),
-                onPressed: () async {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => FirstScreen(),
-                    ),
-                  );
-                  final prefs = await SharedPreferences.getInstance();
-                  prefs.remove("token");
-                  debugPrint('${prefs.getString('token')}  token');
-                },
-                child: Text(
-                  'logout',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
-                ),
-              ),
-            ),
+            // Positioned(
+            //   bottom: 10,
+            //   right: 10,
+            //   child:
+            // ),
           ],
         ),
       ),
@@ -435,12 +519,6 @@ class HomePage extends StatelessWidget {
             Expanded(
               flex: 4,
               child: Container(
-                color: Theme.of(context).colorScheme.secondary,
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Container(
                 color: Theme.of(context).colorScheme.primary,
               ),
             ),
@@ -448,6 +526,12 @@ class HomePage extends StatelessWidget {
               flex: 2,
               child: Container(
                 color: Theme.of(context).colorScheme.secondary,
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Container(
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ],
@@ -458,7 +542,7 @@ class HomePage extends StatelessWidget {
           child: Container(
             width: size.width * 0.5,
             height: constraints.maxWidth * 0.35,
-            color: Theme.of(context).colorScheme.primary,
+            color: Theme.of(context).colorScheme.secondary,
           ),
         ),
         Positioned(
@@ -467,7 +551,7 @@ class HomePage extends StatelessWidget {
           child: Container(
             width: size.width * 0.35,
             height: constraints.maxWidth * 0.15,
-            color: Theme.of(context).colorScheme.primary,
+            color: Theme.of(context).colorScheme.secondary,
           ),
         )
       ],
