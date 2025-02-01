@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:werehouse_inventory/configuration/delete/controler_service_deleted.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class DeleteUserGranted extends StatefulWidget {
@@ -35,6 +36,11 @@ class _AddNewAdminState extends State<DeleteUserGranted> {
       await Future.delayed(
         Duration(seconds: 5),
         () {
+          setState(
+            () {
+              isLoding = false;
+            },
+          );
           _fromKey.currentState!.reset();
         },
       );
@@ -50,7 +56,7 @@ class _AddNewAdminState extends State<DeleteUserGranted> {
 
       wsHelper.sendMessage(
         {
-          "endpoint": "register",
+          "endpoint": "deleteUserGratend",
           "data": {
             "name": name,
           },
@@ -58,18 +64,41 @@ class _AddNewAdminState extends State<DeleteUserGranted> {
       );
 
       await for (var data in wsHelper.streamController.stream) {
-        if (data['endpoint'] == "RIGISTER") {
+        if (data['endpoint'] == "FREEDATAGRATEND") {
           if (data.containsKey("warning")) {
             final warning = data['warning'];
-            if (!context.mounted) return;
-            alertDialog(context, warning);
 
-            debugPrint("$warning waring");
-            return;
-          } else if (data.containsKey('message')) {
             if (!context.mounted) return;
+            messageFromServer(
+              warning,
+              false,
+              Theme.of(context).colorScheme.error,
+            );
+
+            _fromKey.currentState!.reset();
+            setState(
+              () {
+                isLoding = false;
+              },
+            );
+            return;
+          }
+          if (data.containsKey('message')) {
             final message = data['message'];
-            message(context, message);
+
+            if (!context.mounted) return;
+            messageFromServer(
+              message,
+              true,
+              Theme.of(context).colorScheme.surface,
+            );
+
+            _fromKey.currentState!.reset();
+            setState(
+              () {
+                isLoding = false;
+              },
+            );
           }
         }
       }
@@ -78,13 +107,13 @@ class _AddNewAdminState extends State<DeleteUserGranted> {
     }
   }
 
-  Future<dynamic> message(BuildContext context, message) {
+  Future<dynamic> messageFromServer(message, bool isMessage, Color color) {
     return showDialog(
       context: context,
-      builder: (context) => AlertDialog.adaptive(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (context) => AlertDialog(
+        backgroundColor: color,
         title: Text(
-          'MESSAGE',
+          isMessage ? 'MESSAGE' : "WARNING",
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSecondary,
             fontWeight: FontWeight.w500,
@@ -116,69 +145,38 @@ class _AddNewAdminState extends State<DeleteUserGranted> {
     );
   }
 
-  Future<dynamic> alertDialog(BuildContext context, warning) {
-    return showDialog(
-      context: context,
-      builder: (context) => AlertDialog.adaptive(
-        backgroundColor: Theme.of(context).colorScheme.error,
-        title: Text(
-          "WARNING",
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onError,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        content: Text(
-          "$warning",
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onError,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        actions: [
-          TextButton(
-            style: TextButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.secondary,
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              Future.delayed(
-                Duration(seconds: 1),
-                () {
-                  _fromKey.currentState!.reset();
-                  setState(
-                    () {
-                      isLoding = false;
-                    },
-                  );
-                },
-              );
-            },
-            child: Text(
-              "Yes",
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onError,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        debugPrint("${constraints.maxWidth}");
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          debugPrint("${constraints.maxWidth}");
 
-        if (constraints.maxWidth < 800) {
-          return mobile(context, constraints);
-        } else {
-          return desktop(context, constraints);
-        }
-      },
+          if (constraints.maxWidth < 800) {
+            return mobile(context, constraints);
+          } else {
+            return desktop(context, constraints);
+          }
+        },
+      ),
+      floatingActionButton: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Theme.of(context).colorScheme.secondary,
+        ),
+        onPressed: () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ControllerServiceDeleted(),
+            ),
+          );
+        },
+        child: Icon(
+          Icons.arrow_back_ios,
+          color: Colors.white,
+        ),
+      ),
     );
   }
 
@@ -191,7 +189,7 @@ class _AddNewAdminState extends State<DeleteUserGranted> {
             padding: EdgeInsets.only(
               right: constraints.maxWidth * 0.25,
               left: constraints.maxWidth * 0.25,
-              top: constraints.maxWidth * 0.05,
+              top: constraints.maxWidth * 0.3,
             ),
             child: Form(
               key: _fromKey,
@@ -288,7 +286,7 @@ class _AddNewAdminState extends State<DeleteUserGranted> {
           padding: EdgeInsets.only(
             right: constraints.maxWidth * 0.1,
             left: constraints.maxWidth * 0.1,
-            top: constraints.maxWidth * 0.05,
+            top: constraints.maxWidth * 0.3,
           ),
           child: Form(
             key: _fromKey,
