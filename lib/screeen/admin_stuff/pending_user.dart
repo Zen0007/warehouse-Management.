@@ -8,8 +8,6 @@ class PendingUser extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -36,25 +34,21 @@ class PendingUser extends StatelessWidget {
           return StreamBuilder(
             stream: wsHelper.pendingData(),
             builder: (context, snapshot) {
-              debugPrint("${snapshot.data} is exist");
-              debugPrint(
-                  "${snapshot.connectionState == ConnectionState.waiting}  has data");
-
               if (!snapshot.hasData) {
                 return Center(
                   child: CircularProgressIndicator.adaptive(),
                 );
-              } else if (snapshot.hasData) {
-                if (snapshot.data!.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'data is empty',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onPrimary,
-                      ),
+              } else if (snapshot.data!.isEmpty) {
+                return Center(
+                  child: Text(
+                    'data is empty',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
                     ),
-                  );
-                }
+                  ),
+                );
+              }
+              if (snapshot.hasData) {
                 return LayoutBuilder(
                   builder: (context, constraints) {
                     int count;
@@ -100,52 +94,13 @@ class PendingUser extends StatelessWidget {
                     );
                   },
                 );
-              } else if (snapshot.hasError) {
-                debugPrint("${snapshot.error}");
-                return Center(
-                  child: SizedBox(
-                    width: size.width * 04,
-                    height: size.height * 0.5,
-                    child: Card(
-                      color: Theme.of(context).colorScheme.surface,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      elevation: 4,
-                      child: Column(
-                        children: [
-                          ListTile(
-                            title: Text(
-                              "${snapshot.error}",
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.onPrimary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
               }
-
               return Center(
-                child: SizedBox(
-                  width: size.width * 0.4,
-                  height: size.height * 0.4,
-                  child: Card(
-                    color: Theme.of(context).colorScheme.surface,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    elevation: 4,
-                    child: Column(
-                      children: [
-                        ListTile(
-                          title: Text("${snapshot.error}"),
-                        ),
-                      ],
-                    ),
+                child: Text(
+                  "${snapshot.error}",
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               );
