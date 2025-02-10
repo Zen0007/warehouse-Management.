@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werehouse_inventory/page/app.dart';
+import 'package:werehouse_inventory/shered_data_to_root/sent_frequent_request.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -13,6 +14,11 @@ void main() {
             WebSocketChannel.connect(Uri.parse('ws://127.0.0.1:8080/ws')),
           ),
         ),
+        Provider(
+          create: (context) => FrequentRequestHandler(
+            context.read<WebsocketHelper>(),
+          ),
+        )
       ],
       child: App(),
     ),
