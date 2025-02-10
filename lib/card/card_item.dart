@@ -9,7 +9,6 @@ class CardItem extends StatelessWidget {
     super.key,
     required this.data,
     required this.imageSize,
-    required this.callback,
   }) : isUser = false;
 
   const CardItem.forUser({
@@ -17,12 +16,11 @@ class CardItem extends StatelessWidget {
     required this.data,
     required this.imageSize,
     required this.isUser,
-  }) : callback = null;
+  });
 
   final Index data;
   final double imageSize;
   final bool isUser;
-  final VoidCallback? callback;
 
   Future<void> store(
       String category, String index, String name, String label) async {
@@ -43,6 +41,7 @@ class CardItem extends StatelessWidget {
       String response, Color color, Color backgroundColor) {
     return showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog.adaptive(
         backgroundColor: backgroundColor,
         title: Text(
@@ -63,7 +62,6 @@ class CardItem extends StatelessWidget {
           OutlinedButton(
             onPressed: () {
               Navigator.pop(context);
-              callback;
             },
             child: Text(
               "Yes",
@@ -116,37 +114,26 @@ class CardItem extends StatelessWidget {
   }
 
   void deletedItem(BuildContext context, WebsocketHelper wsHelper) async {
-    wsHelper.sendMessage({
-      'endpoint': "deleteItem",
-      'data': {
-        'category': data.category,
-        'index': data.index,
-      }
-    });
-
-    await for (var status in wsHelper.streamController.stream) {
-      if (status['endpoint'] == "DELETEITEM") {
-        if (status.containsKey('message')) {
-          if (!context.mounted) return;
-          messages(
-            context,
-            true,
-            status['message'],
-            Theme.of(context).colorScheme.onSurface,
-            Theme.of(context).colorScheme.surface,
-          );
-          return;
-        } else {
-          if (!context.mounted) return;
-          messages(
-            context,
-            true,
-            status['warning'],
-            Theme.of(context).colorScheme.onError,
-            Theme.of(context).colorScheme.error,
-          );
-        }
-      }
+    final message = await wsHelper.deleteItem.future;
+    if (message.containsKey('message')) {
+      if (!context.mounted) return;
+      messages(
+        context,
+        true,
+        message['message'],
+        Theme.of(context).colorScheme.onSurface,
+        Theme.of(context).colorScheme.surface,
+      );
+      return;
+    } else {
+      if (!context.mounted) return;
+      messages(
+        context,
+        true,
+        message['warning'],
+        Theme.of(context).colorScheme.onError,
+        Theme.of(context).colorScheme.error,
+      );
     }
   }
 
@@ -173,6 +160,7 @@ class CardItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      key: ValueKey(data.index),
       color: Theme.of(context).colorScheme.secondary,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -301,6 +289,14 @@ class CardItem extends StatelessWidget {
                   children: [
                     IconButton(
                       onPressed: () {
+                        wsHelper.sendMessage({
+                          'endpoint': "deleteItem",
+                          'data': {
+                            'category': data.category,
+                            'index': data.index,
+                          }
+                        });
+
                         deletedItem(context, wsHelper);
                       },
                       style: IconButton.styleFrom(
