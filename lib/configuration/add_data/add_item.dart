@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_picker_for_web/image_picker_for_web.dart';
 import 'package:provider/provider.dart';
+import 'package:werehouse_inventory/configuration/add_data/controler_service_add.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class AddItem extends StatefulWidget {
@@ -66,7 +67,7 @@ class _AddItemState extends State<AddItem> {
     );
   }
 
-  void sumbit(BuildContext context, WebsocketHelper wsHelper) async {
+  void sumbit(WebsocketHelper wsHelper) async {
     final validate = _fromKey.currentState!.validate();
 
     if (!validate) {
@@ -91,12 +92,15 @@ class _AddItemState extends State<AddItem> {
           isLoding = true;
         },
       );
-      if (image == null) {
-        alertIfImageNull('image must add');
-        return;
-      }
+      // if (image == null) {
+      //   alertIfImageNull('image must add');
+      //   return;
+      // }
       if (valueDropDown == null) {
         alertIfImageNull('category must add');
+        setState(() {
+          isLoding = false;
+        });
         return;
       }
 
@@ -112,46 +116,48 @@ class _AddItemState extends State<AddItem> {
         },
       );
 
-      await for (var data in wsHelper.streamController.stream) {
-        if (data['endpoint'] == "ADDNEWITEM") {
-          if (data.containsKey('message')) {
-            final message = data['message'];
+      final request = await wsHelper.addNewData.future;
+      if (request.containsKey('message')) {
+        final message = request['message'];
 
-            if (!context.mounted) return;
-            messageFromServer(
-              message,
-              true,
-              Theme.of(context).colorScheme.surface,
-            );
-
-            setState(
-              () {
-                isLoding = false;
-                image = null;
-                valueDropDown = null;
-              },
-            );
-            _fromKey.currentState!.reset();
-            return;
-          }
-          if (data.containsKey("warning")) {
-            final waring = data['warning'];
-
-            if (!context.mounted) return;
-            messageFromServer(
-              waring,
-              false,
-              Theme.of(context).colorScheme.error,
-            );
-
-            setState(
-              () {
-                isLoding = false;
-              },
-            );
-            return;
-          }
+        if (!mounted) {
+          return;
         }
+        messageFromServer(
+          message,
+          true,
+          Theme.of(context).colorScheme.surface,
+        );
+
+        setState(
+          () {
+            isLoding = false;
+            image = null;
+            valueDropDown = null;
+          },
+        );
+        _fromKey.currentState!.reset();
+        return;
+      }
+      if (request.containsKey("warning")) {
+        final waring = request['warning'];
+
+        if (!mounted) {
+          return;
+        }
+        messageFromServer(
+          waring,
+          false,
+          Theme.of(context).colorScheme.error,
+        );
+
+        setState(
+          () {
+            isLoding = false;
+          },
+        );
+
+        return;
       }
     } catch (e, s) {
       debugPrint("$e");
@@ -219,6 +225,17 @@ class _AddItemState extends State<AddItem> {
           }
         },
       ),
+      floatingActionButton: FloatingActionButton.small(
+        onPressed: () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ControllerService(),
+            ),
+          );
+        },
+        child: Icon(Icons.arrow_back_ios_new),
+      ),
     );
   }
 
@@ -244,13 +261,24 @@ class _AddItemState extends State<AddItem> {
             ),
             child: InkWell(
               onTap: _pickerImageGalery,
-              child: Center(
-                child: Text(
-                  'add image',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSecondary,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'add image ',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSecondary,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
-                ),
+                  Text(
+                    'image opsional',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSecondary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
             ),
           )
@@ -302,8 +330,8 @@ class _AddItemState extends State<AddItem> {
             builder: (FormFieldState<String> state) {
               return Consumer<WebsocketHelper>(
                 builder: (context, wsHelper, child) {
-                  return FutureBuilder(
-                    future: wsHelper.keyCategory(),
+                  return StreamBuilder(
+                    stream: wsHelper.keyResult.stream,
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
                         return Center(
@@ -322,6 +350,7 @@ class _AddItemState extends State<AddItem> {
                         );
                       }
                       if (snapshot.hasData) {
+                        final listKey = wsHelper.processKey(snapshot.data!);
                         return InputDecorator(
                           decoration: InputDecoration(
                             labelStyle: TextStyle(
@@ -337,6 +366,22 @@ class _AddItemState extends State<AddItem> {
                           isEmpty: valueDropDown == null,
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton(
+                              items: listKey.map(
+                                (selected) {
+                                  return DropdownMenuItem(
+                                    value: selected,
+                                    child: Text(
+                                      selected.key,
+                                      style: TextStyle(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSecondary,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ).toList(),
                               hint: valueDropDown == null
                                   ? Text(
                                       "Pilih Category Item",
@@ -363,22 +408,6 @@ class _AddItemState extends State<AddItem> {
                                 );
                               },
                               isDense: true,
-                              items: snapshot.data!.map(
-                                (selected) {
-                                  return DropdownMenuItem(
-                                    value: selected,
-                                    child: Text(
-                                      selected.key,
-                                      style: TextStyle(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSecondary,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ).toList(),
                             ),
                           ),
                         );
@@ -509,7 +538,7 @@ class _AddItemState extends State<AddItem> {
               return ElevatedButton(
                 onPressed: () {
                   // for summbit ------------------------------------------------
-                  sumbit(context, wsHelper);
+                  sumbit(wsHelper);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -552,13 +581,24 @@ class _AddItemState extends State<AddItem> {
             ),
             child: InkWell(
               onTap: _pickerImageGalery,
-              child: Center(
-                child: Text(
-                  'add image',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSecondary,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'add image ',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSecondary,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
-                ),
+                  Text(
+                    'image opsional',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSecondary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
             ),
           )
@@ -609,8 +649,8 @@ class _AddItemState extends State<AddItem> {
           child: FormField(builder: (FormFieldState<String> state) {
             return Consumer<WebsocketHelper>(
               builder: (context, wsHelper, child) {
-                return FutureBuilder(
-                  future: wsHelper.keyCategory(),
+                return StreamBuilder(
+                  stream: wsHelper.keyResult.stream,
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) {
                       return Center(
@@ -629,6 +669,8 @@ class _AddItemState extends State<AddItem> {
                       );
                     }
                     if (snapshot.hasData) {
+                      final listKey = wsHelper.processKey(snapshot.data!);
+
                       return InputDecorator(
                         decoration: InputDecoration(
                           labelStyle: TextStyle(
@@ -644,6 +686,22 @@ class _AddItemState extends State<AddItem> {
                         isEmpty: valueDropDown == null,
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton(
+                            items: listKey.map(
+                              (selected) {
+                                return DropdownMenuItem(
+                                  value: selected,
+                                  child: Text(
+                                    selected.key,
+                                    style: TextStyle(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSecondary,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ).toList(),
                             hint: valueDropDown == null
                                 ? Text(
                                     "Pilih Category Item",
@@ -670,22 +728,6 @@ class _AddItemState extends State<AddItem> {
                               );
                             },
                             isDense: true,
-                            items: snapshot.data!.map(
-                              (selected) {
-                                return DropdownMenuItem(
-                                  value: selected,
-                                  child: Text(
-                                    selected.key,
-                                    style: TextStyle(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSecondary,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ).toList(),
                           ),
                         ),
                       );
@@ -815,7 +857,7 @@ class _AddItemState extends State<AddItem> {
                 return ElevatedButton(
                   onPressed: () {
                     // for summbit ------------------------------------------------
-                    sumbit(context, wsHelper);
+                    sumbit(wsHelper);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.secondary,
