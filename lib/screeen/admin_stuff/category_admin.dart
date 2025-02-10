@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werehouse_inventory/card/card_item.dart';
+import 'package:werehouse_inventory/data%20type/index.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class CategoryAdmin extends StatefulWidget {
@@ -12,7 +13,15 @@ class CategoryAdmin extends StatefulWidget {
 
 class _CategoryAdminState extends State<CategoryAdmin> {
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final frequentRequest = Provider.of<WebsocketHelper>(context, listen: true);
+    frequentRequest.getDataAllCollection();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -33,11 +42,8 @@ class _CategoryAdminState extends State<CategoryAdmin> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Consumer<WebsocketHelper>(
         builder: (contex, wsHelper, child) {
-          //listener database
-          wsHelper.getDataAllCollection();
-
           return StreamBuilder(
-            stream: wsHelper.indexCategoryForAdmin(widget.title),
+            stream: wsHelper.streamCollectionAdmin.stream,
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return const Center(
@@ -54,11 +60,24 @@ class _CategoryAdminState extends State<CategoryAdmin> {
                 );
               }
               if (snapshot.hasData) {
+                final List<Index> indexItem =
+                    wsHelper.processIndex(widget.title, snapshot.data!) ?? [];
+
+                if (indexItem.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'item kosong',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
+                    ),
+                  );
+                }
                 return LayoutBuilder(
                   builder: (context, constraints) {
                     int count;
                     double mainAxisExtent;
-                    print(constraints.maxWidth);
+                    debugPrint("${constraints.maxWidth} ");
 
                     if (constraints.maxWidth < 480) {
                       count = 2;
@@ -80,7 +99,7 @@ class _CategoryAdminState extends State<CategoryAdmin> {
                     double sizeImage = constraints.maxWidth / count;
                     return GridView.builder(
                       shrinkWrap: true,
-                      itemCount: snapshot.data!.length,
+                      itemCount: indexItem.length,
                       padding: const EdgeInsets.all(10),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: count,
@@ -88,15 +107,10 @@ class _CategoryAdminState extends State<CategoryAdmin> {
                         crossAxisSpacing: 1,
                         mainAxisExtent: mainAxisExtent,
                       ),
-                      itemBuilder: (context, index) {
+                      itemBuilder: (context, indexs) {
                         return CardItem(
-                          data: snapshot.data![index],
+                          data: indexItem[indexs],
                           imageSize: sizeImage,
-                          callback: () {
-                            setState(() {
-                              wsHelper.getDataAllCollectionOnce();
-                            });
-                          },
                         );
                       },
                     );
