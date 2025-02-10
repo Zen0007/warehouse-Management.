@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:werehouse_inventory/configuration/add_data/controler_service_add.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class AddCategory extends StatefulWidget {
@@ -23,7 +24,7 @@ class _AddCategory extends State<AddCategory> {
     });
   }
 
-  void sumbit(BuildContext context, WebsocketHelper wsHelper) async {
+  void sumbit(WebsocketHelper wsHelper) async {
     final validate = _fromKey.currentState!.validate();
 
     if (!validate) {
@@ -62,7 +63,7 @@ class _AddCategory extends State<AddCategory> {
           if (data.containsKey("warning")) {
             final warning = data['warning'];
 
-            if (!context.mounted) return;
+            if (!mounted) return;
             messageFromServer(
               warning,
               false,
@@ -80,7 +81,7 @@ class _AddCategory extends State<AddCategory> {
           if (data.containsKey('message')) {
             final message = data['message'];
 
-            if (!context.mounted) return;
+            if (!mounted) return;
             messageFromServer(
               message,
               true,
@@ -160,6 +161,17 @@ class _AddCategory extends State<AddCategory> {
             return desktop(context, constraints);
           }
         },
+      ),
+      floatingActionButton: FloatingActionButton.small(
+        onPressed: () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ControllerService(),
+            ),
+          );
+        },
+        child: Icon(Icons.arrow_back_ios_new),
       ),
     );
   }
@@ -243,7 +255,7 @@ class _AddCategory extends State<AddCategory> {
             child: Consumer<WebsocketHelper>(
               builder: (contex, wsHelper, child) {
                 return ElevatedButton(
-                  onPressed: () => sumbit(context, wsHelper),
+                  onPressed: () => sumbit(wsHelper),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.secondary,
                   ),
@@ -270,7 +282,7 @@ class _AddCategory extends State<AddCategory> {
           padding: EdgeInsets.only(
             right: constraints.maxWidth * 0.1,
             left: constraints.maxWidth * 0.1,
-            top: constraints.maxWidth * 0.05,
+            top: constraints.maxWidth * 0.1,
           ),
           child: Form(
             key: _fromKey,
@@ -338,7 +350,7 @@ class _AddCategory extends State<AddCategory> {
             child: Consumer<WebsocketHelper>(
               builder: (contex, wsHelper, child) {
                 return ElevatedButton(
-                  onPressed: () => sumbit(context, wsHelper),
+                  onPressed: () => sumbit(wsHelper),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.secondary,
                   ),
