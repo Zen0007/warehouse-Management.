@@ -8,111 +8,25 @@ import 'package:werehouse_inventory/data%20type/index.dart';
 import 'package:werehouse_inventory/data%20type/key_category_list.dart';
 
 class WebsocketHelper with ChangeNotifier {
-  WebSocketChannel? channel;
   WebsocketHelper(this.channel) {
     connect();
     grantedForReturnItem();
   }
 
-  final StreamController<Map> streamController =
-      StreamController<Map>.broadcast();
   Stream? broadCastStream;
   Timer? _reconnectTimer;
+  WebSocketChannel? channel;
   bool isConnected = false;
   final Duration _reconnectDelay = Duration(seconds: 5);
-
-  void getDataBorrow() {
-    channel?.sink.add(json.encode({"endpoint": "getDataBorrow"}));
-  }
-
-  void getDataBorrowOnce() {
-    channel?.sink.add(json.encode({"endpoint": "getDataBorrowOnce"}));
-    notifyListeners();
-  }
-
-  void getDataCategoryUser() {
-    channel?.sink.add(json.encode({"endpoint": "getDataCollectionAvaileble"}));
-  }
-
-  void getDataCategoryUserOnce() {
-    channel?.sink
-        .add(json.encode({"endpoint": "getDataCollectionAvailebleOnce"}));
-    notifyListeners();
-  }
-
-  void getDataAllCollection() {
-    channel?.sink.add(json.encode({"endpoint": "getDataAllCollection"}));
-  }
-
-  void getDataAllCollectionOnce() {
-    channel?.sink.add(json.encode({"endpoint": "getDataAllCollectionOnce"}));
-    notifyListeners();
-  }
-
-  void getDataPending() {
-    channel?.sink.add(json.encode({"endpoint": "getDataPending"}));
-  }
-
-  void getDataPendingOnce() {
-    channel?.sink.add(json.encode({"endpoint": "getDataPendingOnce"}));
-    notifyListeners();
-  }
-
-  void getAllKeyCategory() {
-    channel?.sink.add(json.encode({"endpoint": "getAllKeyCategory"}));
-  }
-
-  void getAllKeyCategoryOnce() {
-    channel?.sink.add(json.encode({"endpoint": "getAllKeyCategoryOnce"}));
-    notifyListeners();
-  }
-
-  void getDataGranted() {
-    channel?.sink.add(json.encode({"endpoint": "getDataGranted"}));
-  }
-
-  void getDataGrantedOnce() {
-    channel?.sink.add(json.encode({"endpoint": "getDataGrantedOnce"}));
-    notifyListeners();
-  }
+  final streamController = StreamController<Map>.broadcast();
+  final streamCollectionAdmin = StreamController<List>.broadcast();
+  final keyResult = StreamController<List>.broadcast();
+  final addNewData = Completer<Map>();
+  final deleteCollection = Completer<Map>();
+  final deleteItem = Completer<Map>();
 
   static Map jsonDecodes(dynamic jsons) {
     return json.decode(jsons);
-  }
-
-  void connect() async {
-    try {
-      broadCastStream = channel?.stream.asBroadcastStream();
-      broadCastStream?.listen(
-        (message) async {
-          // process code in another thread
-          final streamData = await compute(jsonDecodes, message);
-          notifyListeners();
-
-          streamController.sink.add(streamData);
-        },
-        onDone: () {
-          print('connection close ');
-
-          isConnected = false;
-          reconnet();
-        },
-        onError: (e) {
-          print(e);
-
-          isConnected = false;
-          reconnet();
-        },
-      );
-
-      isConnected = true;
-    } catch (e, s) {
-      debugPrint("$e");
-      debugPrint("$s");
-
-      isConnected = false;
-      reconnet();
-    }
   }
 
   void closeWebSocket() {
@@ -123,7 +37,9 @@ class WebsocketHelper with ChangeNotifier {
       _reconnectTimer = null;
       broadCastStream = null;
       isConnected = false;
+      notifyListeners();
     }
+    notifyListeners();
   }
 
   void reconnet() async {
@@ -154,6 +70,137 @@ class WebsocketHelper with ChangeNotifier {
     }
   }
 
+  void connect() async {
+    try {
+      broadCastStream = channel?.stream.asBroadcastStream();
+      broadCastStream?.listen(
+        (message) async {
+          // process code in another thread
+          final streamData = await compute(jsonDecodes, message);
+
+          switch (streamData['endpoint']) {
+            case 'GETDATAALLCATEGORY':
+              notifyListeners();
+              streamCollectionAdmin.sink.add(streamData['message']);
+              break;
+            case "GETDATAALLKEYCATEGORY":
+              notifyListeners();
+              keyResult.sink.add(streamData['message']);
+              break;
+            case "ADDNEWITEM":
+              notifyListeners();
+              addNewData.complete(streamData);
+              break;
+            case "DELETECATEGORY":
+              notifyListeners();
+              deleteCollection.complete(streamData);
+              break;
+            case "DELETEITEM":
+              notifyListeners();
+              deleteItem.complete(streamData);
+              break;
+            default:
+              notifyListeners();
+              streamController.sink.add(streamData);
+              break;
+          }
+          print("$streamData  connect");
+        },
+        onDone: () {
+          print('connection close ');
+
+          isConnected = false;
+          reconnet();
+          notifyListeners();
+        },
+        onError: (e) {
+          print(e);
+
+          isConnected = false;
+          reconnet();
+          notifyListeners();
+        },
+      );
+
+      isConnected = true;
+      notifyListeners();
+    } catch (e, s) {
+      debugPrint("$e");
+      debugPrint("$s");
+
+      isConnected = false;
+      reconnet();
+      notifyListeners();
+    }
+  }
+
+  //sent Frequent Request
+  void getDataBorrow() {
+    channel?.sink.add(json.encode({"endpoint": "getDataBorrow"}));
+  }
+
+  //sent once Request
+  void getDataBorrowOnce() {
+    channel?.sink.add(json.encode({"endpoint": "getDataBorrowOnce"}));
+    notifyListeners();
+  }
+
+  //sent Frequent Request
+  void getDataCategoryUser() {
+    channel?.sink.add(json.encode({"endpoint": "getDataCollectionAvaileble"}));
+  }
+
+  //sent once Request
+  void getDataCategoryUserOnce() {
+    channel?.sink
+        .add(json.encode({"endpoint": "getDataCollectionAvailebleOnce"}));
+    notifyListeners();
+  }
+
+  //sent Frequent Request
+  void getDataAllCollection() {
+    channel?.sink.add(json.encode({"endpoint": "getDataAllCollection"}));
+  }
+
+  //sent once Request
+  void getDataAllCollectionOnce() {
+    channel?.sink.add(json.encode({"endpoint": "getDataAllCollectionOnce"}));
+    notifyListeners();
+  }
+
+  //sent Frequent Request
+  void getDataPending() {
+    channel?.sink.add(json.encode({"endpoint": "getDataPending"}));
+  }
+
+  //sent once Request
+  void getDataPendingOnce() {
+    channel?.sink.add(json.encode({"endpoint": "getDataPendingOnce"}));
+    notifyListeners();
+  }
+
+  //sent Frequent Request
+  void getAllKeyCategory() {
+    channel?.sink.add(json.encode({"endpoint": "getAllKeyCategory"}));
+  }
+
+  //sent once Request
+  void getAllKeyCategoryOnce() {
+    channel?.sink.add(json.encode({"endpoint": "getAllKeyCategoryOnce"}));
+    notifyListeners();
+  }
+
+  //sent Frequent Request
+  void getDataGranted() {
+    channel?.sink.add(json.encode({"endpoint": "getDataGranted"}));
+  }
+
+  //sent once Request
+  void getDataGrantedOnce() {
+    channel?.sink.add(json.encode({"endpoint": "getDataGrantedOnce"}));
+    notifyListeners();
+  }
+
   void grantedForReturnItem() async {
     await for (var data in streamController.stream) {
       if (data['endpoint'] == "GRANTED") {
@@ -171,6 +218,11 @@ class WebsocketHelper with ChangeNotifier {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.remove('hasBorrow');
     return;
+  }
+
+  Future<Map> message() async {
+    await Future.delayed(Duration(seconds: 10));
+    return {"message": "respone"};
   }
 
   void sendMessage(Map<String, dynamic> message) {
@@ -497,6 +549,38 @@ class WebsocketHelper with ChangeNotifier {
     notifyListeners();
   }
 
+  List<Index>? processIndex(String title, List index) {
+    final List<Index> data = [];
+
+    for (var i = 0; i < index.length; i++) {
+      if (index[i][title] != null) {
+        for (var entry in index[i][title].entries) {
+          print("${entry.value['image'].runtimeType}");
+          final List<int> listInt =
+              List<int>.from(entry.value['image'] as List);
+          final Uint8List uint8list = Uint8List.fromList(listInt);
+
+          final index =
+              Index.fromJson(entry.value, entry.key, title, uint8list);
+          data.add(index);
+        }
+
+        return data;
+      }
+    }
+
+    return data;
+  }
+
+  List<KeyCategoryList> processKey(List data) {
+    List<KeyCategoryList> key = [];
+    for (var i = 0; i < data.length; i++) {
+      final keyCategory = KeyCategoryList.fromJson(data[i]);
+      key.add(keyCategory);
+    }
+    return key;
+  }
+
   static List<Index> processMessageKeyInIsolate(List message) {
     final title = message[0];
     final index = message[1];
@@ -550,6 +634,7 @@ class WebsocketHelper with ChangeNotifier {
   void dispose() {
     channel?.sink.close();
     streamController.close();
+    streamCollectionAdmin.close();
     _reconnectTimer!.cancel();
     super.dispose();
   }
