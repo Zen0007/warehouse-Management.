@@ -7,11 +7,6 @@ class FrequentRequestHandler {
   Timer? timer;
 
   void frequentRequestCollectionAdmin() {
-    timer = Timer.periodic(
-      Duration(seconds: 10),
-      (_) {
-        wsHelper.getDataAllCollection();
-      },
-    );
+    wsHelper.getDataAllCollection();
   }
 }
