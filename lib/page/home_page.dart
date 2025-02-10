@@ -78,6 +78,44 @@ class HomePage extends StatelessWidget {
     );
   }
 
+  Future<dynamic> messages(BuildContext context, String response) {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog.adaptive(
+        backgroundColor: Theme.of(context).colorScheme.error,
+        title: Text(
+          "MESSAGE",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        content: Text(
+          response,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        actions: [
+          OutlinedButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text(
+              "Yes",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -154,8 +192,8 @@ class HomePage extends StatelessWidget {
                         }
                       },
                       children: [
-                        FutureBuilder(
-                          future: wsHelper.keyCategory(),
+                        StreamBuilder(
+                          stream: wsHelper.keyResult.stream,
                           builder: (context, snapshot) {
                             if (!snapshot.hasData) {
                               return Center(
@@ -166,7 +204,10 @@ class HomePage extends StatelessWidget {
                               );
                             }
                             if (snapshot.hasData) {
-                              if (snapshot.data!.isEmpty) {
+                              // process key to list
+                              final key = wsHelper.processKey(snapshot.data!);
+
+                              if (key.isEmpty) {
                                 return Center(
                                   child: ListTile(
                                     title: Text(
@@ -182,29 +223,28 @@ class HomePage extends StatelessWidget {
                               }
                               return Column(
                                 children: [
-                                  if (snapshot.data!.isNotEmpty) ...[
-                                    for (final data in snapshot.data!)
-                                      ListCategory(
-                                        category: data.key,
-                                        onSelectCategory: () {
-                                          // get all data for admin
-                                          wsHelper.getDataAllCollectionOnce();
-                                          selectCategory(
-                                            context,
-                                            data.key,
-                                          );
+                                  for (final data in key)
+                                    ListCategory(
+                                      category: data.key,
+                                      onSelectCategory: () {
+                                        // get all data for admin once
+                                        wsHelper.getDataAllCollectionOnce();
+                                        selectCategory(
+                                          context,
+                                          data.key,
+                                        );
 
-                                          print("is Press");
-                                        },
-                                      ),
-                                  ] else
-                                    Text('category key kosong'),
+                                        print("is Press");
+                                      },
+                                    ),
                                 ],
                               );
                             } else {
+                              messages(context,
+                                  '${snapshot.error}'); // pop up message error
                               return ListTile(
                                 title: Text(
-                                  "${snapshot.error}",
+                                  "error",
                                   style: TextStyle(
                                     color:
                                         Theme.of(context).colorScheme.onPrimary,

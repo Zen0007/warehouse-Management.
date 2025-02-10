@@ -44,7 +44,7 @@ class _AddItemState extends State<DeleteItems> {
     );
   }
 
-  void sumbit(BuildContext context, WebsocketHelper wsHelper) async {
+  void sumbit(WebsocketHelper wsHelper) async {
     final validate = _fromKey.currentState!.validate();
 
     if (!validate) {
@@ -67,6 +67,9 @@ class _AddItemState extends State<DeleteItems> {
 
       if (valueDropDown == null) {
         alertIfNull('category must add');
+        setState(() {
+          isLoding = false;
+        });
         return;
       }
 
@@ -84,18 +87,73 @@ class _AddItemState extends State<DeleteItems> {
       await for (var data in wsHelper.streamController.stream) {
         if (data['endpoint'] == "NEWITEM") {
           if (data.containsKey("warning")) {
-            if (!context.mounted) return;
+            if (!mounted) return;
+            messageFromServer(
+              data['warnig'],
+              false,
+              Theme.of(context).colorScheme.surface,
+            );
             return;
           } else if (data.containsKey('message')) {
-            if (!context.mounted) return;
+            if (!mounted) return;
             final message = data['message'];
-            message(context, message);
+            messageFromServer(
+              message,
+              true,
+              Theme.of(context).colorScheme.surface,
+            );
           }
         }
       }
     } catch (e) {
       debugPrint("$e");
     }
+  }
+
+  Future<dynamic> messageFromServer(message, bool isMessage, Color color) {
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog.adaptive(
+        backgroundColor: color,
+        title: Text(
+          isMessage ? 'MESSAGE' : 'WARNING',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        content: Text(
+          "$message",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.secondary,
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+
+              setState(
+                () {
+                  isLoding = false;
+                },
+              );
+            },
+            child: Text(
+              "Yes",
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onError,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void clearImage() {
@@ -298,7 +356,7 @@ class _AddItemState extends State<DeleteItems> {
               return ElevatedButton(
                 onPressed: () {
                   // for summbit ------------------------------------------------
-                  sumbit(context, wsHelper);
+                  sumbit(wsHelper);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -497,7 +555,7 @@ class _AddItemState extends State<DeleteItems> {
                 return ElevatedButton(
                   onPressed: () {
                     // for summbit ------------------------------------------------
-                    sumbit(context, wsHelper);
+                    sumbit(wsHelper);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.secondary,

@@ -42,7 +42,7 @@ class _AddItemState extends State<DeleteCategory> {
     );
   }
 
-  void sumbit(BuildContext context, WebsocketHelper wsHelper) async {
+  void sumbit(WebsocketHelper wsHelper) async {
     try {
       setState(
         () {
@@ -52,6 +52,9 @@ class _AddItemState extends State<DeleteCategory> {
 
       if (valueDropDown == null) {
         alertIfNull('category must add');
+        setState(() {
+          isLoding = false;
+        });
         return;
       }
 
@@ -64,42 +67,42 @@ class _AddItemState extends State<DeleteCategory> {
         },
       );
 
-      await for (var data in wsHelper.streamController.stream) {
-        if (data['endpoint'] == "DELETECATEGORY") {
-          if (data.containsKey("warning")) {
-            final warning = data['message'];
+      final Map message = await wsHelper.deleteCollection.future;
+      if (!mounted) {
+        return;
+      }
+      print("message delete category $message");
+      if (message.containsKey("warning")) {
+        final warning = message['warning'];
 
-            if (!context.mounted) return;
-            messageFromServer(
-              warning,
-              true,
-              Theme.of(context).colorScheme.error,
-            );
-            setState(
-              () {
-                isLoding = false;
-              },
-            );
+        messageFromServer(
+          warning,
+          true,
+          Theme.of(context).colorScheme.error,
+        );
+        setState(
+          () {
+            isLoding = false;
+          },
+        );
 
-            return;
-          }
-          if (data.containsKey('message')) {
-            final message = data['message'];
+        return;
+      }
+      if (message.containsKey('message')) {
+        final messages = message['message'];
+        print("delet kategory $messages");
 
-            if (!context.mounted) return;
-            messageFromServer(
-              message,
-              true,
-              Theme.of(context).colorScheme.surface,
-            );
-            setState(
-              () {
-                isLoding = false;
-                valueDropDown = null;
-              },
-            );
-          }
-        }
+        messageFromServer(
+          messages,
+          true,
+          Theme.of(context).colorScheme.surface,
+        );
+        setState(
+          () {
+            isLoding = false;
+            valueDropDown = null;
+          },
+        );
       }
     } catch (e) {
       debugPrint("$e");
@@ -114,14 +117,14 @@ class _AddItemState extends State<DeleteCategory> {
         title: Text(
           isMessage ? 'MESSAGE' : 'WARNING',
           style: TextStyle(
-            color: Theme.of(context).colorScheme.onSecondary,
+            color: Colors.white,
             fontWeight: FontWeight.w500,
           ),
         ),
         content: Text(
           "$message",
           style: TextStyle(
-            color: Theme.of(context).colorScheme.onSecondary,
+            color: Colors.white,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -154,6 +157,8 @@ class _AddItemState extends State<DeleteCategory> {
 
   @override
   Widget build(BuildContext context) {
+    final frequentRequest = Provider.of<WebsocketHelper>(context, listen: true);
+    frequentRequest.getAllKeyCategory();
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: LayoutBuilder(
@@ -200,11 +205,8 @@ class _AddItemState extends State<DeleteCategory> {
             builder: (FormFieldState<String> state) {
               return Consumer<WebsocketHelper>(
                 builder: (context, wsHelper, child) {
-                  // listen database
-                  wsHelper.getAllKeyCategory();
-
-                  return FutureBuilder(
-                    future: wsHelper.keyCategory(),
+                  return StreamBuilder(
+                    stream: wsHelper.keyResult.stream,
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
                         return Center(
@@ -223,6 +225,7 @@ class _AddItemState extends State<DeleteCategory> {
                         );
                       }
                       if (snapshot.hasData) {
+                        final listKey = wsHelper.processKey(snapshot.data!);
                         return InputDecorator(
                           decoration: InputDecoration(
                             labelStyle: TextStyle(
@@ -238,6 +241,22 @@ class _AddItemState extends State<DeleteCategory> {
                           isEmpty: valueDropDown == null,
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton(
+                              items: listKey.map(
+                                (selected) {
+                                  return DropdownMenuItem(
+                                    value: selected,
+                                    child: Text(
+                                      selected.key,
+                                      style: TextStyle(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSecondary,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ).toList(),
                               hint: valueDropDown == null
                                   ? Text(
                                       "Pilih Category Item",
@@ -264,22 +283,6 @@ class _AddItemState extends State<DeleteCategory> {
                                 );
                               },
                               isDense: true,
-                              items: snapshot.data!.map(
-                                (selected) {
-                                  return DropdownMenuItem(
-                                    value: selected,
-                                    child: Text(
-                                      selected.key,
-                                      style: TextStyle(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSecondary,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ).toList(),
                             ),
                           ),
                         );
@@ -337,7 +340,7 @@ class _AddItemState extends State<DeleteCategory> {
               return ElevatedButton(
                 onPressed: () {
                   // for summbit ------------------------------------------------
-                  sumbit(context, wsHelper);
+                  sumbit(wsHelper);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -371,11 +374,8 @@ class _AddItemState extends State<DeleteCategory> {
           child: FormField(builder: (FormFieldState<String> state) {
             return Consumer<WebsocketHelper>(
               builder: (context, wsHelper, child) {
-                // listen database
-                wsHelper.getAllKeyCategory();
-
-                return FutureBuilder(
-                  future: wsHelper.keyCategory(),
+                return StreamBuilder(
+                  stream: wsHelper.keyResult.stream,
                   builder: (context, snapshot) {
                     print(snapshot.data);
                     if (!snapshot.hasData) {
@@ -395,6 +395,7 @@ class _AddItemState extends State<DeleteCategory> {
                       );
                     }
                     if (snapshot.hasData) {
+                      final listKey = wsHelper.processKey(snapshot.data!);
                       return InputDecorator(
                         decoration: InputDecoration(
                           labelStyle: TextStyle(
@@ -410,6 +411,22 @@ class _AddItemState extends State<DeleteCategory> {
                         isEmpty: valueDropDown == null,
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton(
+                            items: listKey.map(
+                              (selected) {
+                                return DropdownMenuItem(
+                                  value: selected,
+                                  child: Text(
+                                    selected.key,
+                                    style: TextStyle(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSecondary,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ).toList(),
                             hint: valueDropDown == null
                                 ? Text(
                                     "Pilih Category Item",
@@ -436,22 +453,6 @@ class _AddItemState extends State<DeleteCategory> {
                               );
                             },
                             isDense: true,
-                            items: snapshot.data!.map(
-                              (selected) {
-                                return DropdownMenuItem(
-                                  value: selected,
-                                  child: Text(
-                                    selected.key,
-                                    style: TextStyle(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSecondary,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ).toList(),
                           ),
                         ),
                       );
@@ -508,7 +509,7 @@ class _AddItemState extends State<DeleteCategory> {
                 return ElevatedButton(
                   onPressed: () {
                     // for summbit ------------------------------------------------
-                    sumbit(context, wsHelper);
+                    sumbit(wsHelper);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.secondary,
