@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:werehouse_inventory/configuration/add_data/controler_service_add.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class AddNewAdmin extends StatefulWidget {
@@ -25,7 +26,7 @@ class _AddNewAdminState extends State<AddNewAdmin> {
     });
   }
 
-  void sumbit(BuildContext context, WebsocketHelper wsHelper) async {
+  void sumbit(WebsocketHelper wsHelper) async {
     final validate = _fromKey.currentState!.validate();
     final prefs = await SharedPreferences.getInstance();
     // ignore: unused_local_variable
@@ -69,7 +70,7 @@ class _AddNewAdminState extends State<AddNewAdmin> {
           if (data.containsKey("warning")) {
             final warning = data['warning'];
 
-            if (!context.mounted) return;
+            if (!mounted) return;
             messageFromServer(
               warning,
               false,
@@ -87,7 +88,7 @@ class _AddNewAdminState extends State<AddNewAdmin> {
           }
           if (data.containsKey('message')) {
             final message = data['message'];
-            if (!context.mounted) return;
+            if (!mounted) return;
 
             messageFromServer(
               message,
@@ -117,14 +118,14 @@ class _AddNewAdminState extends State<AddNewAdmin> {
         title: Text(
           isMessage ? 'MESSAGE' : "WARNING",
           style: TextStyle(
-            color: Theme.of(context).colorScheme.onSecondary,
+            color: Colors.white,
             fontWeight: FontWeight.w500,
           ),
         ),
         content: Text(
           "$message",
           style: TextStyle(
-            color: Theme.of(context).colorScheme.onSecondary,
+            color: Colors.white,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -168,6 +169,17 @@ class _AddNewAdminState extends State<AddNewAdmin> {
             return desktop(context, constraints);
           }
         },
+      ),
+      floatingActionButton: FloatingActionButton.small(
+        onPressed: () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ControllerService(),
+            ),
+          );
+        },
+        child: Icon(Icons.arrow_back_ios_new),
       ),
     );
   }
@@ -297,7 +309,7 @@ class _AddNewAdminState extends State<AddNewAdmin> {
             child: Consumer<WebsocketHelper>(
               builder: (contex, wsHelper, child) {
                 return ElevatedButton(
-                  onPressed: () => sumbit(context, wsHelper),
+                  onPressed: () => sumbit(wsHelper),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.secondary,
                   ),
@@ -439,7 +451,7 @@ class _AddNewAdminState extends State<AddNewAdmin> {
             child: Consumer<WebsocketHelper>(
               builder: (contex, wsHelper, child) {
                 return ElevatedButton(
-                  onPressed: () => sumbit(context, wsHelper),
+                  onPressed: () => sumbit(wsHelper),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.secondary,
                   ),
