@@ -85,7 +85,7 @@ class CardItem extends StatelessWidget {
       }
     });
 
-    await for (var status in wsHelper.streamController.stream) {
+    await for (var status in wsHelper.streamControllerAll.stream) {
       if (status['endpoint'] == "UPDATESTATUSITEM") {
         if (status.containsKey('message')) {
           if (!context.mounted) return;
@@ -114,26 +114,27 @@ class CardItem extends StatelessWidget {
   }
 
   void deletedItem(BuildContext context, WebsocketHelper wsHelper) async {
-    final message = await wsHelper.deleteItem.future;
-    if (message.containsKey('message')) {
-      if (!context.mounted) return;
-      messages(
-        context,
-        true,
-        message['message'],
-        Theme.of(context).colorScheme.onSurface,
-        Theme.of(context).colorScheme.surface,
-      );
-      return;
-    } else {
-      if (!context.mounted) return;
-      messages(
-        context,
-        true,
-        message['warning'],
-        Theme.of(context).colorScheme.onError,
-        Theme.of(context).colorScheme.error,
-      );
+    await for (final message in wsHelper.deleteItem.stream) {
+      if (message.containsKey('message')) {
+        if (!context.mounted) return;
+        messages(
+          context,
+          true,
+          message['message'],
+          Theme.of(context).colorScheme.onSurface,
+          Theme.of(context).colorScheme.surface,
+        );
+        return;
+      } else {
+        if (!context.mounted) return;
+        messages(
+          context,
+          true,
+          message['warning'],
+          Theme.of(context).colorScheme.onError,
+          Theme.of(context).colorScheme.error,
+        );
+      }
     }
   }
 
