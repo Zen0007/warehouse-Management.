@@ -4,9 +4,14 @@ import 'package:werehouse_inventory/card/card_borrow.dart';
 import 'package:werehouse_inventory/data%20type/borrow_user.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
-class BorrowUserPage extends StatelessWidget {
+class BorrowUserPage extends StatefulWidget {
   const BorrowUserPage({super.key});
 
+  @override
+  State<BorrowUserPage> createState() => _BorrowUserPageState();
+}
+
+class _BorrowUserPageState extends State<BorrowUserPage> {
   @override
   Widget build(BuildContext context) {
     final frequentRequest = Provider.of<WebsocketHelper>(context, listen: true);
@@ -60,13 +65,13 @@ class BorrowUserPage extends StatelessWidget {
                     debugPrint("${constraints.maxWidth} size");
                     if (constraints.maxWidth < 400) {
                       count = 1;
-                      mainAxisExtent = constraints.maxHeight * 1.4;
+                      mainAxisExtent = constraints.maxHeight * 5.5;
                     } else if (constraints.maxWidth < 500) {
                       count = 2;
-                      mainAxisExtent = constraints.maxWidth * 0.66;
+                      mainAxisExtent = constraints.maxWidth * 0.75;
                     } else if (constraints.maxWidth < 700) {
                       count = 3;
-                      mainAxisExtent = constraints.maxWidth * 0.47;
+                      mainAxisExtent = constraints.maxWidth * 0.55;
                     } else if (constraints.maxWidth < 900) {
                       count = 4;
                       mainAxisExtent = constraints.maxWidth * 0.35;
