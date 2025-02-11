@@ -137,7 +137,6 @@ class WebsocketHelper with ChangeNotifier {
               streamControllerAll.sink.add(streamData);
               break;
           }
-          print("$streamData  connect");
         },
         onDone: () {
           print('connection close ');
@@ -380,38 +379,6 @@ class WebsocketHelper with ChangeNotifier {
     ));
   }
 
-  Stream<BorrowUser> userHasBorrow() async* {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final getToken = prefs.getString('hasBorrow');
-    print("$getToken user name");
-
-    try {
-      channel?.sink.add(json.encode(
-        {
-          "endpoint": "hasBorrow",
-          "data": {
-            "name": getToken ?? '',
-          }
-        },
-      ));
-
-      await for (final status in streamControllerAll.stream) {
-        if (status['endpoint'] == "HASBORROW") {
-          for (var data in status['message'].values) {
-            if (data is Map) {
-              final user = BorrowUser.from(data);
-              notifyListeners();
-              yield user;
-            }
-          }
-        }
-      }
-    } catch (e, s) {
-      print(e);
-      debugPrint("$s strackTrace");
-    }
-  }
-
   Stream<Map> responseLogin() async* {
     Map data = {};
 
@@ -436,80 +403,6 @@ class WebsocketHelper with ChangeNotifier {
     }
   }
 
-  Stream<List<BorrowUser>> borrowUser() async* {
-    await for (var data in streamControllerAll.stream) {
-      if (data['endpoint'] == 'GETDATABORROW') {
-        final List<BorrowUser> list = [];
-
-        if (data['message'].isEmpty) {
-          yield [];
-        }
-
-        for (var i = 0; i < data['message'].length; i++) {
-          final Map dataMessage = data['message'][i];
-          for (var data in dataMessage.values) {
-            if (data is Map) {
-              final user = BorrowUser.from(data);
-              list.add(user);
-            }
-          }
-        }
-        notifyListeners();
-        yield list;
-      }
-    }
-  }
-
-  Stream<List<BorrowUser>> pendingData() async* {
-    await for (var data in streamControllerAll.stream) {
-      if (data['endpoint'] == 'GETDATAPENDING') {
-        final List<BorrowUser> list = [];
-
-        if (data['message'].isEmpty) {
-          yield [];
-        }
-
-        for (var i = 0; i < data['message'].length; i++) {
-          final Map dataMessage = data['message'][i];
-          for (var data in dataMessage.values) {
-            if (data is Map) {
-              final user = BorrowUser.from(data);
-              list.add(user);
-            }
-          }
-        }
-        notifyListeners();
-        yield list;
-      }
-    }
-  }
-
-  List<BorrowUser> processPending(List data) {
-    final List<BorrowUser> list = [];
-
-    for (var i = 0; i < data.length; i++) {
-      final Map dataMessage = data[i];
-      for (var data in dataMessage.values) {
-        if (data is Map) {
-          final user = BorrowUser.from(data);
-          list.add(user);
-        }
-      }
-    }
-    return list;
-  }
-
-  List<KeyCategoryList> processMessageKeyToIsolate(Map data) {
-    List<KeyCategoryList> key = [];
-    for (var i = 0; i < data['message'].length; i++) {
-      final keyCategory = KeyCategoryList.fromJson(data['message'][i]);
-      key.add(keyCategory);
-    }
-
-    notifyListeners();
-    return key;
-  }
-
   Stream<List<Index>> indexCategoryForUser(String title) async* {
     await for (var index in streamControllerAll.stream) {
       if (index['endpoint'] == "GETDATACATEGORYAVAILEBLE") {
@@ -527,6 +420,60 @@ class WebsocketHelper with ChangeNotifier {
     }
   }
 
+  Stream<BorrowUser> userHasBorrow() async* {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final getToken = prefs.getString('hasBorrow');
+    print("$getToken user name");
+
+    try {
+      channel?.sink.add(json.encode(
+        {
+          "endpoint": "hasBorrow",
+          "data": {
+            "name": getToken ?? '',
+          }
+        },
+      ));
+
+      await for (final status in streamControllerAll.stream) {
+        if (status['endpoint'] == "HASBORROW") {
+          for (var data in status['message'].values) {
+            if (data is Map) {
+              final List<int> listInt =
+                  List<int>.from(data['imageSelfie'] as List);
+              final Uint8List uint8list = Uint8List.fromList(listInt);
+
+              final user = BorrowUser.from(data, uint8list);
+              notifyListeners();
+              yield user;
+            }
+          }
+        }
+      }
+    } catch (e, s) {
+      print(e);
+      debugPrint("$s strackTrace");
+    }
+  }
+
+  List<BorrowUser> processPending(List data) {
+    final List<BorrowUser> list = [];
+
+    for (var i = 0; i < data.length; i++) {
+      final Map dataMessage = data[i];
+      for (var data in dataMessage.values) {
+        if (data is Map) {
+          final List<int> listInt = List<int>.from(data['imageSelfie'] as List);
+          final Uint8List uint8list = Uint8List.fromList(listInt);
+
+          final user = BorrowUser.from(data, uint8list);
+          list.add(user);
+        }
+      }
+    }
+    return list;
+  }
+
   List<BorrowUser> processGranted(List data) {
     final List<BorrowUser> list = [];
 
@@ -535,12 +482,15 @@ class WebsocketHelper with ChangeNotifier {
 
       for (var data in dataMessage.values) {
         if (data is Map) {
-          final user = BorrowUser.from(data);
+          final List<int> listInt = List<int>.from(data['imageSelfie'] as List);
+          final Uint8List uint8list = Uint8List.fromList(listInt);
+
+          final user = BorrowUser.from(data, uint8list);
           list.add(user);
         }
       }
     }
-    notifyListeners();
+
     return list;
   }
 
@@ -558,7 +508,7 @@ class WebsocketHelper with ChangeNotifier {
               Index.fromJson(entry.value, entry.key, title, uint8list);
           data.add(index);
         }
-        notifyListeners();
+
         return data;
       }
     }
@@ -572,12 +522,14 @@ class WebsocketHelper with ChangeNotifier {
       final Map dataMessage = data[i];
       for (var data in dataMessage.values) {
         if (data is Map) {
-          final user = BorrowUser.from(data);
+          final List<int> listInt = List<int>.from(data['imageSelfie'] as List);
+          final Uint8List uint8list = Uint8List.fromList(listInt);
+
+          final user = BorrowUser.from(data, uint8list);
           list.add(user);
         }
       }
     }
-    notifyListeners();
     return list;
   }
 
@@ -587,7 +539,7 @@ class WebsocketHelper with ChangeNotifier {
       final keyCategory = KeyCategoryList.fromJson(data[i]);
       key.add(keyCategory);
     }
-    notifyListeners();
+
     return key;
   }
 }
