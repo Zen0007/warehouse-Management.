@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werehouse_inventory/card/card_pending.dart';
+import 'package:werehouse_inventory/data%20type/borrow_user.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class GrantendUser extends StatelessWidget {
@@ -8,6 +9,9 @@ class GrantendUser extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final frequentRequest = Provider.of<WebsocketHelper>(context, listen: true);
+    frequentRequest.getDataGranted();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -28,11 +32,8 @@ class GrantendUser extends StatelessWidget {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Consumer<WebsocketHelper>(
         builder: (contex, wsHelper, child) {
-          //  this code for listener database
-          wsHelper.getDataGranted();
-
           return StreamBuilder(
-            stream: wsHelper.userHasReturnItems(),
+            stream: wsHelper.streamGranted.stream,
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return Center(
@@ -49,6 +50,9 @@ class GrantendUser extends StatelessWidget {
                 );
               }
               if (snapshot.hasData) {
+                final List<BorrowUser> listGrated =
+                    wsHelper.processGranted(snapshot.data!);
+
                 return LayoutBuilder(
                   builder: (context, constraints) {
                     int count;
@@ -77,7 +81,7 @@ class GrantendUser extends StatelessWidget {
                     double sizeImage = constraints.maxWidth / count;
                     return GridView.builder(
                       shrinkWrap: true,
-                      itemCount: snapshot.data!.length,
+                      itemCount: listGrated.length,
                       padding: const EdgeInsets.all(10),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: count,
@@ -87,7 +91,7 @@ class GrantendUser extends StatelessWidget {
                       ),
                       itemBuilder: (context, index) {
                         return CardPending(
-                          data: snapshot.data![index],
+                          data: listGrated[index],
                           imageSize: sizeImage,
                         );
                       },

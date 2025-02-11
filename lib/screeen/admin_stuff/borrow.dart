@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werehouse_inventory/card/card_borrow.dart';
+import 'package:werehouse_inventory/data%20type/borrow_user.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class BorrowUserPage extends StatelessWidget {
@@ -8,6 +9,9 @@ class BorrowUserPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final frequentRequest = Provider.of<WebsocketHelper>(context, listen: true);
+    frequentRequest.getDataBorrow();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -28,27 +32,27 @@ class BorrowUserPage extends StatelessWidget {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Consumer<WebsocketHelper>(
         builder: (contex, wsHelper, child) {
-          //  this code fro catch data from borrow user
-          wsHelper.getDataBorrow(); // listner database
-
           return StreamBuilder(
-            stream: wsHelper.borrowUser(),
+            stream: wsHelper.streamBorrow.stream,
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return Center(
                   child: CircularProgressIndicator.adaptive(),
                 );
-              } else if (snapshot.data!.isEmpty) {
-                return Center(
-                  child: Text(
-                    'data is empty',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onPrimary,
+              } else if (snapshot.hasData) {
+                final List<BorrowUser> listBorrow =
+                    wsHelper.processBorrow(snapshot.data!);
+
+                if (listBorrow.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'data is empty',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
                     ),
-                  ),
-                );
-              }
-              if (snapshot.hasData) {
+                  );
+                }
                 return LayoutBuilder(
                   builder: (context, constraints) {
                     int count;
@@ -77,7 +81,7 @@ class BorrowUserPage extends StatelessWidget {
                     double sizeImage = constraints.maxWidth / count;
                     return GridView.builder(
                       shrinkWrap: true,
-                      itemCount: snapshot.data!.length,
+                      itemCount: listBorrow.length,
                       padding: const EdgeInsets.all(10),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: count,
@@ -87,7 +91,7 @@ class BorrowUserPage extends StatelessWidget {
                       ),
                       itemBuilder: (context, index) {
                         return CardBorrow(
-                          data: snapshot.data![index],
+                          data: listBorrow[index],
                           imageSize: sizeImage,
                         );
                       },

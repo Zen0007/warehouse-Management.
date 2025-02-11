@@ -9,6 +9,8 @@ class ScreenCategoryUser extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final frequentRequest = Provider.of<WebsocketHelper>(context, listen: true);
+    frequentRequest.getDataCategoryUser();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -29,9 +31,6 @@ class ScreenCategoryUser extends StatelessWidget {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Consumer<WebsocketHelper>(
         builder: (contex, wsHelper, child) {
-          //listener database
-          wsHelper.getDataAllCollection();
-
           return StreamBuilder(
             stream: wsHelper.indexCategoryForUser(title),
             builder: (context, snapshot) {

@@ -18,12 +18,33 @@ class WebsocketHelper with ChangeNotifier {
   WebSocketChannel? channel;
   bool isConnected = false;
   final Duration _reconnectDelay = Duration(seconds: 5);
-  final streamController = StreamController<Map>.broadcast();
+  final streamControllerAll = StreamController<Map>.broadcast();
   final streamCollectionAdmin = StreamController<List>.broadcast();
-  final keyResult = StreamController<List>.broadcast();
-  final addNewData = Completer<Map>();
-  final deleteCollection = Completer<Map>();
-  final deleteItem = Completer<Map>();
+  final streamKeyResult = StreamController<List>.broadcast();
+  final streamBorrow = StreamController<List>.broadcast();
+  final streamPending = StreamController<List>.broadcast();
+  final streamGranted = StreamController<List>.broadcast();
+
+  final addNewData = StreamController<Map>.broadcast();
+  final deleteCollection = StreamController<Map>.broadcast();
+  final deleteItem = StreamController<Map>.broadcast();
+
+  @override
+  void dispose() {
+    channel?.sink.close();
+    streamControllerAll.close();
+    streamCollectionAdmin.close();
+    streamKeyResult.close();
+    streamBorrow.close();
+    streamPending.close();
+    streamGranted.close();
+
+    addNewData.close();
+    deleteCollection.close();
+    deleteItem.close();
+    _reconnectTimer!.cancel();
+    super.dispose();
+  }
 
   static Map jsonDecodes(dynamic jsons) {
     return json.decode(jsons);
@@ -85,23 +106,35 @@ class WebsocketHelper with ChangeNotifier {
               break;
             case "GETDATAALLKEYCATEGORY":
               notifyListeners();
-              keyResult.sink.add(streamData['message']);
+              streamKeyResult.sink.add(streamData['message']);
               break;
             case "ADDNEWITEM":
               notifyListeners();
-              addNewData.complete(streamData);
+              addNewData.sink.add(streamData);
               break;
             case "DELETECATEGORY":
               notifyListeners();
-              deleteCollection.complete(streamData);
+              deleteCollection.sink.add(streamData);
               break;
             case "DELETEITEM":
               notifyListeners();
-              deleteItem.complete(streamData);
+              deleteItem.sink.add(streamData);
+              break;
+            case "GETDATABORROW":
+              notifyListeners();
+              streamBorrow.sink.add(streamData['message']);
+              break;
+            case "GETDATAGRANTED":
+              notifyListeners();
+              streamGranted.sink.add(streamData['message']);
+              break;
+            case "GETDATAPENDING":
+              notifyListeners();
+              streamPending.sink.add(streamData['message']);
               break;
             default:
               notifyListeners();
-              streamController.sink.add(streamData);
+              streamControllerAll.sink.add(streamData);
               break;
           }
           print("$streamData  connect");
@@ -114,7 +147,7 @@ class WebsocketHelper with ChangeNotifier {
           notifyListeners();
         },
         onError: (e) {
-          print(e);
+          print("$e  co");
 
           isConnected = false;
           reconnet();
@@ -202,7 +235,7 @@ class WebsocketHelper with ChangeNotifier {
   }
 
   void grantedForReturnItem() async {
-    await for (var data in streamController.stream) {
+    await for (var data in streamControllerAll.stream) {
       if (data['endpoint'] == "GRANTED") {
         if (data.containsKey('message')) {
           final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -292,7 +325,7 @@ class WebsocketHelper with ChangeNotifier {
         )),
       );
 
-      await for (final status in streamController.stream) {
+      await for (final status in streamControllerAll.stream) {
         if (status['endpoint'] == "VERIFIKASI") {
           notifyListeners();
           yield status['status'];
@@ -318,7 +351,7 @@ class WebsocketHelper with ChangeNotifier {
         ));
       });
 
-      await for (final status in streamController.stream) {
+      await for (final status in streamControllerAll.stream) {
         if (status['endpoint'] == "CHECKUSER") {
           final String dataUser = status['message'];
           notifyListeners();
@@ -362,7 +395,7 @@ class WebsocketHelper with ChangeNotifier {
         },
       ));
 
-      await for (final status in streamController.stream) {
+      await for (final status in streamControllerAll.stream) {
         if (status['endpoint'] == "HASBORROW") {
           for (var data in status['message'].values) {
             if (data is Map) {
@@ -382,7 +415,7 @@ class WebsocketHelper with ChangeNotifier {
   Stream<Map> responseLogin() async* {
     Map data = {};
 
-    await for (var map in streamController.stream) {
+    await for (var map in streamControllerAll.stream) {
       if (map['endpoint'] == 'LOGIN') {
         data.addAll(map);
         notifyListeners();
@@ -394,7 +427,7 @@ class WebsocketHelper with ChangeNotifier {
   Stream<Map> responseRegister() async* {
     Map data = {};
 
-    await for (var map in streamController.stream) {
+    await for (var map in streamControllerAll.stream) {
       if (map['endpoint'] == 'RIGISTER') {
         data.addAll(map);
         notifyListeners();
@@ -404,7 +437,7 @@ class WebsocketHelper with ChangeNotifier {
   }
 
   Stream<List<BorrowUser>> borrowUser() async* {
-    await for (var data in streamController.stream) {
+    await for (var data in streamControllerAll.stream) {
       if (data['endpoint'] == 'GETDATABORROW') {
         final List<BorrowUser> list = [];
 
@@ -428,7 +461,7 @@ class WebsocketHelper with ChangeNotifier {
   }
 
   Stream<List<BorrowUser>> pendingData() async* {
-    await for (var data in streamController.stream) {
+    await for (var data in streamControllerAll.stream) {
       if (data['endpoint'] == 'GETDATAPENDING') {
         final List<BorrowUser> list = [];
 
@@ -451,46 +484,19 @@ class WebsocketHelper with ChangeNotifier {
     }
   }
 
-  Stream<List<BorrowUser>> userHasReturnItems() async* {
-    await for (var data in streamController.stream) {
-      if (data['endpoint'] == 'GETDATAGRANTED') {
-        final List<BorrowUser> list = [];
+  List<BorrowUser> processPending(List data) {
+    final List<BorrowUser> list = [];
 
-        if (data['message'].isEmpty) {
-          yield [];
-        }
-        for (var i = 0; i < data['message'].length; i++) {
-          final Map dataMessage = data['message'][i];
-
-          for (var data in dataMessage.values) {
-            if (data is Map) {
-              final user = BorrowUser.from(data);
-              list.add(user);
-            }
-          }
-        }
-        notifyListeners();
-        yield list;
-      }
-    }
-  }
-
-  Future<List<KeyCategoryList>> keyCategory() async {
-    try {
-      List<KeyCategoryList> key = [];
-
-      await for (var data in streamController.stream) {
-        if (data['endpoint'] == "GETDATAALLKEYCATEGORY") {
-          final keyData = await compute(processMessageKeyToIsolate, data);
-          return keyData;
+    for (var i = 0; i < data.length; i++) {
+      final Map dataMessage = data[i];
+      for (var data in dataMessage.values) {
+        if (data is Map) {
+          final user = BorrowUser.from(data);
+          list.add(user);
         }
       }
-      return key;
-    } catch (e, s) {
-      print(e);
-      print(s);
-      throw Exception('$e');
     }
+    return list;
   }
 
   List<KeyCategoryList> processMessageKeyToIsolate(Map data) {
@@ -505,20 +511,14 @@ class WebsocketHelper with ChangeNotifier {
   }
 
   Stream<List<Index>> indexCategoryForUser(String title) async* {
-    await for (var index in streamController.stream) {
+    await for (var index in streamControllerAll.stream) {
       if (index['endpoint'] == "GETDATACATEGORYAVAILEBLE") {
         if (index['message'].isEmpty) {
           yield [];
         }
         for (var i = 0; i < index['message'].length; i++) {
           if (index['message'][i][title] != null) {
-            final List<Index> data = await compute(
-              processMessageToIsolate,
-              {
-                'message': index['message'][i][title],
-                "title": title,
-              },
-            );
+            final List<Index> data = [];
             notifyListeners();
             yield data;
           }
@@ -527,26 +527,21 @@ class WebsocketHelper with ChangeNotifier {
     }
   }
 
-  Stream<List<Index>> indexCategoryForAdmin(String title) async* {
-    await for (var index in streamController.stream) {
-      if (index['endpoint'] == "GETDATAALLCATEGORY") {
-        for (var i = 0; i < index['message'].length; i++) {
-          if (index['message'][i][title] != null) {
-            final List<Index> data = await compute(
-              processMessageToIsolate,
-              {
-                'message': index['message'][i][title],
-                "title": title,
-              },
-            );
+  List<BorrowUser> processGranted(List data) {
+    final List<BorrowUser> list = [];
 
-            yield data;
-            notifyListeners();
-          }
+    for (var i = 0; i < data.length; i++) {
+      final Map dataMessage = data[i];
+
+      for (var data in dataMessage.values) {
+        if (data is Map) {
+          final user = BorrowUser.from(data);
+          list.add(user);
         }
       }
     }
     notifyListeners();
+    return list;
   }
 
   List<Index>? processIndex(String title, List index) {
@@ -555,7 +550,6 @@ class WebsocketHelper with ChangeNotifier {
     for (var i = 0; i < index.length; i++) {
       if (index[i][title] != null) {
         for (var entry in index[i][title].entries) {
-          print("${entry.value['image'].runtimeType}");
           final List<int> listInt =
               List<int>.from(entry.value['image'] as List);
           final Uint8List uint8list = Uint8List.fromList(listInt);
@@ -564,12 +558,27 @@ class WebsocketHelper with ChangeNotifier {
               Index.fromJson(entry.value, entry.key, title, uint8list);
           data.add(index);
         }
-
+        notifyListeners();
         return data;
       }
     }
 
     return data;
+  }
+
+  List<BorrowUser> processBorrow(List data) {
+    List<BorrowUser> list = [];
+    for (var i = 0; i < data.length; i++) {
+      final Map dataMessage = data[i];
+      for (var data in dataMessage.values) {
+        if (data is Map) {
+          final user = BorrowUser.from(data);
+          list.add(user);
+        }
+      }
+    }
+    notifyListeners();
+    return list;
   }
 
   List<KeyCategoryList> processKey(List data) {
@@ -578,64 +587,7 @@ class WebsocketHelper with ChangeNotifier {
       final keyCategory = KeyCategoryList.fromJson(data[i]);
       key.add(keyCategory);
     }
+    notifyListeners();
     return key;
-  }
-
-  static List<Index> processMessageKeyInIsolate(List message) {
-    final title = message[0];
-    final index = message[1];
-    final List<Index> resultData = [];
-
-    if (index['message'].isEmpty) {
-      return resultData;
-    }
-    for (var i = 0; i < index['message'].length; i++) {
-      if (index['message'][i][title] != null) {
-        for (var entry in index['message'][i][title].entries) {
-          final List<int> listInt =
-              List<int>.from(entry.value['image'] as List);
-
-          final Uint8List uint8list = Uint8List.fromList(listInt);
-
-          final index =
-              Index.fromJson(entry.value, entry.key, title, uint8list);
-          resultData.add(index);
-        }
-
-        return resultData;
-      }
-    }
-
-    return resultData;
-  }
-
-  List<Index> processMessageToIsolate(Map map) {
-    final dynamic index = map['message'];
-    final String title = map['title'];
-    final List<Index> data = [];
-    for (var entry in index.entries) {
-      final List<int> listInt = List<int>.from(entry.value['image'] as List);
-      final Uint8List uint8list = Uint8List.fromList(listInt);
-
-      final index = Index.fromJson(entry.value, entry.key, title, uint8list);
-      data.add(index);
-    }
-    return data;
-  }
-
-  Uint8List imageProcess(dynamic image) {
-    final List<int> listInt = List<int>.from(image as List);
-    final Uint8List uint8list = Uint8List.fromList(listInt);
-
-    return uint8list;
-  }
-
-  @override
-  void dispose() {
-    channel?.sink.close();
-    streamController.close();
-    streamCollectionAdmin.close();
-    _reconnectTimer!.cancel();
-    super.dispose();
   }
 }

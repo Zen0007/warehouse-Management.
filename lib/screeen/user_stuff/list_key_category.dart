@@ -20,6 +20,9 @@ class ListCategoryUser extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final frequentRequest = Provider.of<WebsocketHelper>(context, listen: true);
+    frequentRequest.getAllKeyCategory();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -59,26 +62,25 @@ class ListCategoryUser extends StatelessWidget {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Consumer<WebsocketHelper>(
         builder: (contex, wsHelper, child) {
-          wsHelper.getAllKeyCategory(); // listen change database
-
           return StreamBuilder(
-            stream: wsHelper.keyCategory().asStream(),
+            stream: wsHelper.streamKeyResult.stream,
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return const Center(
                   child: CircularProgressIndicator.adaptive(),
                 );
-              } else if (snapshot.data!.isEmpty) {
-                return Center(
-                  child: Text(
-                    'data is empty',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onPrimary,
+              } else if (snapshot.hasData) {
+                final keyList = wsHelper.processKey(snapshot.data!);
+                if (keyList.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'data is empty',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
                     ),
-                  ),
-                );
-              }
-              if (snapshot.hasData) {
+                  );
+                }
                 return LayoutBuilder(
                   builder: (context, constraints) {
                     int count;
@@ -106,7 +108,7 @@ class ListCategoryUser extends StatelessWidget {
 
                     return GridView.builder(
                       shrinkWrap: true,
-                      itemCount: snapshot.data!.length,
+                      itemCount: keyList.length,
                       padding: const EdgeInsets.all(20),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: count,
@@ -116,13 +118,13 @@ class ListCategoryUser extends StatelessWidget {
                       ),
                       itemBuilder: (context, index) {
                         return CategoryGridItem(
-                          title: snapshot.data![index],
+                          title: keyList[index],
                           onSelectCategory: () {
                             wsHelper
                                 .getDataCategoryUserOnce(); // triger ws send data
                             selectCategory(
                               context,
-                              snapshot.data![index].key,
+                              keyList[index].key,
                             );
                           },
                         );
