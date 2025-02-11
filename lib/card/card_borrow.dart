@@ -88,7 +88,7 @@ class CardBorrow extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (data.admin != null)
+                      if (data.admin!.isEmpty)
                         Text(
                           "admin",
                           style: TextStyle(
@@ -136,7 +136,7 @@ class CardBorrow extends StatelessWidget {
                           color: Theme.of(context).colorScheme.onPrimary,
                         ),
                       ),
-                      if (data.admin != null)
+                      if (data.admin!.isEmpty)
                         Text(
                           "${data.admin}",
                           style: TextStyle(
