@@ -193,7 +193,7 @@ class HomePage extends StatelessWidget {
                       },
                       children: [
                         StreamBuilder(
-                          stream: wsHelper.keyResult.stream,
+                          stream: wsHelper.streamKeyResult.stream,
                           builder: (context, snapshot) {
                             if (!snapshot.hasData) {
                               return Center(

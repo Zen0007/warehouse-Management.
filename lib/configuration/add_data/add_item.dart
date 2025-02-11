@@ -116,52 +116,53 @@ class _AddItemState extends State<AddItem> {
         },
       );
 
-      final request = await wsHelper.addNewData.future;
-      if (request.containsKey('message')) {
-        final message = request['message'];
+      await for (var request in wsHelper.addNewData.stream) {
+        if (request.containsKey('message')) {
+          final message = request['message'];
 
-        if (!mounted) {
+          if (!mounted) {
+            return;
+          }
+          messageFromServer(
+            message,
+            true,
+            Theme.of(context).colorScheme.surface,
+          );
+
+          setState(
+            () {
+              isLoding = false;
+              image = null;
+              valueDropDown = null;
+            },
+          );
+          _fromKey.currentState!.reset();
           return;
         }
-        messageFromServer(
-          message,
-          true,
-          Theme.of(context).colorScheme.surface,
-        );
+        if (request.containsKey("warning")) {
+          final waring = request['warning'];
 
-        setState(
-          () {
-            isLoding = false;
-            image = null;
-            valueDropDown = null;
-          },
-        );
-        _fromKey.currentState!.reset();
-        return;
-      }
-      if (request.containsKey("warning")) {
-        final waring = request['warning'];
+          if (!mounted) {
+            return;
+          }
+          messageFromServer(
+            waring,
+            false,
+            Theme.of(context).colorScheme.error,
+          );
 
-        if (!mounted) {
+          setState(
+            () {
+              isLoding = false;
+            },
+          );
+
           return;
         }
-        messageFromServer(
-          waring,
-          false,
-          Theme.of(context).colorScheme.error,
-        );
-
-        setState(
-          () {
-            isLoding = false;
-          },
-        );
-
-        return;
       }
     } catch (e, s) {
-      debugPrint("$e");
-      print(s);
+      debugPrint("$e 00");
+      print("$s 99");
     }
   }
 
@@ -213,6 +214,9 @@ class _AddItemState extends State<AddItem> {
 
   @override
   Widget build(BuildContext context) {
+    final frequentRequest = Provider.of<WebsocketHelper>(context, listen: true);
+    frequentRequest.getAllKeyCategory();
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: LayoutBuilder(
@@ -331,7 +335,7 @@ class _AddItemState extends State<AddItem> {
               return Consumer<WebsocketHelper>(
                 builder: (context, wsHelper, child) {
                   return StreamBuilder(
-                    stream: wsHelper.keyResult.stream,
+                    stream: wsHelper.streamKeyResult.stream,
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
                         return Center(
@@ -650,7 +654,7 @@ class _AddItemState extends State<AddItem> {
             return Consumer<WebsocketHelper>(
               builder: (context, wsHelper, child) {
                 return StreamBuilder(
-                  stream: wsHelper.keyResult.stream,
+                  stream: wsHelper.streamKeyResult.stream,
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) {
                       return Center(

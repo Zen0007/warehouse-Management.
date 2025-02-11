@@ -65,7 +65,7 @@ class _AddNewAdminState extends State<AddNewAdmin> {
         },
       );
 
-      await for (var data in wsHelper.streamController.stream) {
+      await for (var data in wsHelper.streamControllerAll.stream) {
         if (data['endpoint'] == "RIGISTER") {
           if (data.containsKey("warning")) {
             final warning = data['warning'];

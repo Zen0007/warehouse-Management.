@@ -67,42 +67,43 @@ class _AddItemState extends State<DeleteCategory> {
         },
       );
 
-      final Map message = await wsHelper.deleteCollection.future;
-      if (!mounted) {
-        return;
-      }
-      print("message delete category $message");
-      if (message.containsKey("warning")) {
-        final warning = message['warning'];
+      await for (final message in wsHelper.deleteCollection.stream) {
+        if (!mounted) {
+          return;
+        }
+        print("message delete category $message");
+        if (message.containsKey("warning")) {
+          final warning = message['warning'];
 
-        messageFromServer(
-          warning,
-          true,
-          Theme.of(context).colorScheme.error,
-        );
-        setState(
-          () {
-            isLoding = false;
-          },
-        );
+          messageFromServer(
+            warning,
+            true,
+            Theme.of(context).colorScheme.error,
+          );
+          setState(
+            () {
+              isLoding = false;
+            },
+          );
 
-        return;
-      }
-      if (message.containsKey('message')) {
-        final messages = message['message'];
-        print("delet kategory $messages");
+          return;
+        }
+        if (message.containsKey('message')) {
+          final messages = message['message'];
+          print("delet kategory $messages");
 
-        messageFromServer(
-          messages,
-          true,
-          Theme.of(context).colorScheme.surface,
-        );
-        setState(
-          () {
-            isLoding = false;
-            valueDropDown = null;
-          },
-        );
+          messageFromServer(
+            messages,
+            true,
+            Theme.of(context).colorScheme.surface,
+          );
+          setState(
+            () {
+              isLoding = false;
+              valueDropDown = null;
+            },
+          );
+        }
       }
     } catch (e) {
       debugPrint("$e");
@@ -206,7 +207,7 @@ class _AddItemState extends State<DeleteCategory> {
               return Consumer<WebsocketHelper>(
                 builder: (context, wsHelper, child) {
                   return StreamBuilder(
-                    stream: wsHelper.keyResult.stream,
+                    stream: wsHelper.streamKeyResult.stream,
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
                         return Center(
@@ -375,7 +376,7 @@ class _AddItemState extends State<DeleteCategory> {
             return Consumer<WebsocketHelper>(
               builder: (context, wsHelper, child) {
                 return StreamBuilder(
-                  stream: wsHelper.keyResult.stream,
+                  stream: wsHelper.streamKeyResult.stream,
                   builder: (context, snapshot) {
                     print(snapshot.data);
                     if (!snapshot.hasData) {

@@ -58,7 +58,7 @@ class _AddCategory extends State<AddCategory> {
         },
       );
 
-      await for (var data in wsHelper.streamController.stream) {
+      await for (var data in wsHelper.streamControllerAll.stream) {
         if (data['endpoint'] == "NEWCOLLECTION") {
           if (data.containsKey("warning")) {
             final warning = data['warning'];

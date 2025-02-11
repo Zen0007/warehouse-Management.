@@ -84,7 +84,7 @@ class _AddItemState extends State<DeleteItems> {
         },
       );
 
-      await for (var data in wsHelper.streamController.stream) {
+      await for (var data in wsHelper.streamControllerAll.stream) {
         if (data['endpoint'] == "NEWITEM") {
           if (data.containsKey("warning")) {
             if (!mounted) return;
@@ -164,15 +164,21 @@ class _AddItemState extends State<DeleteItems> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        debugPrint('${constraints.maxWidth} screen');
-        if (constraints.maxWidth < 880) {
-          return smallScreen(constraints, context);
-        } else {
-          return largeScreen(constraints, context);
-        }
-      },
+    final frequentRequest = Provider.of<WebsocketHelper>(context, listen: true);
+    frequentRequest.getAllKeyCategory();
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          debugPrint('${constraints.maxWidth} screen');
+          if (constraints.maxWidth < 880) {
+            return smallScreen(constraints, context);
+          } else {
+            return largeScreen(constraints, context);
+          }
+        },
+      ),
     );
   }
 
@@ -189,14 +195,16 @@ class _AddItemState extends State<DeleteItems> {
             builder: (FormFieldState<String> state) {
               return Consumer<WebsocketHelper>(
                 builder: (context, wsHelper, child) {
-                  return FutureBuilder(
-                    future: wsHelper.keyCategory(),
+                  return StreamBuilder(
+                    stream: wsHelper.streamKeyResult.stream,
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
                         return Center(
                           child: CircularProgressIndicator.adaptive(),
                         );
                       } else if (snapshot.hasData) {
+                        final key = wsHelper.processKey(snapshot.data!);
+
                         return InputDecorator(
                           decoration: InputDecoration(
                             labelStyle: TextStyle(
@@ -238,7 +246,7 @@ class _AddItemState extends State<DeleteItems> {
                                 );
                               },
                               isDense: true,
-                              items: snapshot.data!.map(
+                              items: key.map(
                                 (selected) {
                                   return DropdownMenuItem(
                                     value: selected,
@@ -389,14 +397,15 @@ class _AddItemState extends State<DeleteItems> {
           child: FormField(builder: (FormFieldState<String> state) {
             return Consumer<WebsocketHelper>(
               builder: (context, wsHelper, child) {
-                return FutureBuilder(
-                  future: wsHelper.keyCategory(),
+                return StreamBuilder(
+                  stream: wsHelper.streamKeyResult.stream,
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) {
                       return Center(
                         child: CircularProgressIndicator.adaptive(),
                       );
                     } else if (snapshot.hasData) {
+                      final key = wsHelper.processKey(snapshot.data!);
                       return InputDecorator(
                         decoration: InputDecoration(
                           labelStyle: TextStyle(
@@ -438,7 +447,7 @@ class _AddItemState extends State<DeleteItems> {
                               );
                             },
                             isDense: true,
-                            items: snapshot.data!.map(
+                            items: key.map(
                               (selected) {
                                 return DropdownMenuItem(
                                   value: selected,

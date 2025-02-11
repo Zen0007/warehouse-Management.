@@ -63,7 +63,7 @@ class _AddNewAdminState extends State<DeleteUserGranted> {
         },
       );
 
-      await for (var data in wsHelper.streamController.stream) {
+      await for (var data in wsHelper.streamControllerAll.stream) {
         if (data['endpoint'] == "FREEDATAGRATEND") {
           if (data.containsKey("warning")) {
             final warning = data['warning'];
