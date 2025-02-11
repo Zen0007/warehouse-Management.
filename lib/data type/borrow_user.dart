@@ -27,7 +27,7 @@ class BorrowUser {
     required this.item,
   });
 
-  factory BorrowUser.from(Map json) {
+  factory BorrowUser.from(Map json, Uint8List image) {
     final List<Item> items = [];
     for (var data in json['items']) {
       final index = Item.from(
@@ -38,15 +38,13 @@ class BorrowUser {
       );
       items.add(index);
     }
-    final List<int> listInt = List<int>.from(json['imageSelfie'] as List);
-    final Uint8List intList = Uint8List.fromList(listInt);
 
     return BorrowUser(
       nameUser: json['name'],
       classUser: json['class'],
       nameTeacher: json['nameTeacher'],
       nisn: json['nisn'],
-      imageUser: intList,
+      imageUser: image,
       imageNisn: json['imageSelfie'],
       status: json['status'],
       admin: json['admin'],
