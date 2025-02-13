@@ -36,6 +36,11 @@ class _LoginState extends State<Login> {
           _fromKey.currentState!.reset();
         },
       );
+      setState(
+        () {
+          isLoding = false;
+        },
+      );
       return;
     }
     _fromKey.currentState!.save();
@@ -62,6 +67,11 @@ class _LoginState extends State<Login> {
           if (!context.mounted) return;
           alertDialog(context, warning);
 
+          setState(
+            () {
+              isLoding = false;
+            },
+          );
           debugPrint("$warning waring");
           return;
         } else if (data.containsKey('message')) {
@@ -114,11 +124,6 @@ class _LoginState extends State<Login> {
                 Duration(seconds: 1),
                 () {
                   _fromKey.currentState!.reset();
-                  setState(
-                    () {
-                      isLoding = false;
-                    },
-                  );
                 },
               );
             },
