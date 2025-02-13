@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werehouse_inventory/data%20type/index.dart';
-import 'package:werehouse_inventory/shered_data_to_root/shared_preferences.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class CardItem extends StatelessWidget {
@@ -9,33 +8,10 @@ class CardItem extends StatelessWidget {
     super.key,
     required this.data,
     required this.imageSize,
-  }) : isUser = false;
-
-  const CardItem.forUser({
-    super.key,
-    required this.data,
-    required this.imageSize,
-    required this.isUser,
   });
 
   final Index data;
   final double imageSize;
-  final bool isUser;
-
-  Future<void> store(
-      String category, String index, String name, String label) async {
-    await StoredUserChoice().addNewMapToSharedPreferences(
-      {
-        "category": category,
-        "index": index,
-        "nameItem": name,
-        "label": label,
-      },
-    );
-    final dataShow = await StoredUserChoice().getListFromSharedPreferences();
-
-    debugPrint("$dataShow data carditem");
-  }
 
   Future<dynamic> messages(BuildContext context, bool isMessage,
       String response, Color color, Color backgroundColor) {
@@ -76,43 +52,6 @@ class CardItem extends StatelessWidget {
     );
   }
 
-  void updateStatus(BuildContext context, WebsocketHelper wsHelper) async {
-    wsHelper.sendMessage({
-      'endpoint': 'updateStatusItem',
-      'data': {
-        'category': data.category,
-        'index': data.index,
-      }
-    });
-
-    await for (var status in wsHelper.streamControllerAll.stream) {
-      if (status['endpoint'] == "UPDATESTATUSITEM") {
-        if (status.containsKey('message')) {
-          if (!context.mounted) return;
-
-          messages(
-            context,
-            true,
-            status['message'],
-            Theme.of(context).colorScheme.onSecondary,
-            Theme.of(context).colorScheme.surface,
-          );
-
-          return;
-        } else {
-          if (!context.mounted) return;
-          messages(
-            context,
-            false,
-            status['warning'],
-            Theme.of(context).colorScheme.onError,
-            Theme.of(context).colorScheme.error,
-          );
-        }
-      }
-    }
-  }
-
   void deletedItem(BuildContext context, WebsocketHelper wsHelper) async {
     await for (final message in wsHelper.deleteItem.stream) {
       if (message.containsKey('message')) {
@@ -136,26 +75,6 @@ class CardItem extends StatelessWidget {
         );
       }
     }
-  }
-
-  Row buttonAddChoiceUser(BuildContext context, WebsocketHelper wsHelper) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        IconButton(
-          onPressed: () {
-            store(data.category, data.index, data.name, data.label);
-            updateStatus(context, wsHelper);
-          },
-          style: IconButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-          ),
-          icon: Icon(
-            Icons.bookmark_add_outlined,
-          ),
-        ),
-      ],
-    );
   }
 
   @override
@@ -258,29 +177,28 @@ class CardItem extends StatelessWidget {
               )
             ],
           ),
-          if (!isUser)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                Text(
-                  "status :",
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Text(
+                "status :",
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(
-                  width: 4,
+              ),
+              const SizedBox(
+                width: 4,
+              ),
+              Text(
+                data.status,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
                 ),
-                Text(
-                  data.status,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                )
-              ],
-            ),
+              )
+            ],
+          ),
           Padding(
             padding: const EdgeInsets.only(top: 15, right: 6),
             child: Consumer<WebsocketHelper>(
@@ -314,15 +232,6 @@ class CardItem extends StatelessWidget {
               },
             ),
           ),
-          if (isUser)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 5, right: 6),
-              child: Consumer<WebsocketHelper>(
-                builder: (context, wsHelper, child) {
-                  return buttonAddChoiceUser(context, wsHelper);
-                },
-              ),
-            )
         ],
       ),
     );
