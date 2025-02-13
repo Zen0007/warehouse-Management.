@@ -14,6 +14,7 @@ class CardBorrow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      key: ValueKey(data.time),
       onTap: () => detailUser(context),
       child: Card(
         color: Theme.of(context).colorScheme.secondary,
@@ -88,7 +89,7 @@ class CardBorrow extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (data.admin!.isEmpty)
+                      if (data.admin!.isNotEmpty)
                         Text(
                           "admin",
                           style: TextStyle(
@@ -136,7 +137,7 @@ class CardBorrow extends StatelessWidget {
                           color: Theme.of(context).colorScheme.onPrimary,
                         ),
                       ),
-                      if (data.admin!.isEmpty)
+                      if (data.admin!.isNotEmpty)
                         Text(
                           "${data.admin}",
                           style: TextStyle(
@@ -190,10 +191,10 @@ class CardBorrow extends StatelessWidget {
             ),
             if (data.time != null)
               Text(
-                "${data.time}",
+                data.time!.substring(0, 19),
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onPrimary,
-                  fontSize: 30,
+                  fontSize: 10,
                 ),
               ),
           ],
