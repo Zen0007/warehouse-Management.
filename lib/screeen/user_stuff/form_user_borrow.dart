@@ -63,6 +63,11 @@ class _FormForUserState extends State<FormForUser> {
             _fromKey.currentState!.reset();
           },
         );
+        setState(
+          () {
+            isLoding = false;
+          },
+        );
         return;
       }
       _fromKey.currentState!.save();
@@ -75,6 +80,12 @@ class _FormForUserState extends State<FormForUser> {
 
       if (image == null) {
         alertIfImageNull("wajib melampirkan selfie");
+
+        setState(
+          () {
+            isLoding = false;
+          },
+        );
         return;
       }
       final listChoiceUser =
@@ -106,7 +117,6 @@ class _FormForUserState extends State<FormForUser> {
             Future.delayed(
               Duration(seconds: 1),
               () {
-                _fromKey.currentState!.reset();
                 setState(
                   () {
                     isLoding = false;
@@ -130,6 +140,17 @@ class _FormForUserState extends State<FormForUser> {
             prefs.setString('hasBorrow', name);
             prefs.remove("choice");
 
+            Future.delayed(
+              Duration(seconds: 1),
+              () {
+                _fromKey.currentState!.reset();
+                setState(
+                  () {
+                    isLoding = false;
+                  },
+                );
+              },
+            );
             if (!context.mounted) return;
             messages(wsHelper);
           }
