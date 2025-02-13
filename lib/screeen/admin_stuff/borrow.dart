@@ -14,8 +14,8 @@ class BorrowUserPage extends StatefulWidget {
 class _BorrowUserPageState extends State<BorrowUserPage> {
   @override
   Widget build(BuildContext context) {
-    final frequentRequest = Provider.of<WebsocketHelper>(context, listen: true);
-    frequentRequest.getDataBorrow();
+    final secondaryWs = Provider.of<WebsocketHelper>(context, listen: true);
+    secondaryWs.getDataBorrow();
 
     return Scaffold(
       appBar: AppBar(
@@ -65,22 +65,31 @@ class _BorrowUserPageState extends State<BorrowUserPage> {
                     debugPrint("${constraints.maxWidth} size");
                     if (constraints.maxWidth < 400) {
                       count = 1;
-                      mainAxisExtent = constraints.maxHeight * 5.5;
+                      mainAxisExtent = constraints.maxWidth * 1.1;
                     } else if (constraints.maxWidth < 500) {
                       count = 2;
-                      mainAxisExtent = constraints.maxWidth * 0.75;
+                      mainAxisExtent = constraints.maxWidth * 0.83;
+                    } else if (constraints.maxWidth < 600) {
+                      count = 2;
+                      mainAxisExtent = constraints.maxWidth * 0.76;
                     } else if (constraints.maxWidth < 700) {
                       count = 3;
-                      mainAxisExtent = constraints.maxWidth * 0.55;
+                      mainAxisExtent = constraints.maxWidth * 0.56;
                     } else if (constraints.maxWidth < 900) {
                       count = 4;
-                      mainAxisExtent = constraints.maxWidth * 0.35;
+                      mainAxisExtent = constraints.maxWidth * 0.45;
                     } else if (constraints.maxWidth < 1000) {
                       count = 5;
-                      mainAxisExtent = constraints.maxWidth * 0.3;
+                      mainAxisExtent = constraints.maxWidth * 0.35;
+                    } else if (constraints.maxWidth < 1200) {
+                      count = 5;
+                      mainAxisExtent = constraints.maxWidth * 0.34;
+                    } else if (constraints.maxWidth > 1200) {
+                      count = 6;
+                      mainAxisExtent = constraints.maxWidth * 0.28;
                     } else {
                       count = 6;
-                      mainAxisExtent = constraints.maxWidth * 0.25;
+                      mainAxisExtent = constraints.maxWidth * 0.29;
                     }
 
                     double sizeImage = constraints.maxWidth / count;

@@ -4,13 +4,20 @@ import 'package:werehouse_inventory/card/card_pending.dart';
 import 'package:werehouse_inventory/data%20type/borrow_user.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
-class PendingUser extends StatelessWidget {
+class PendingUser extends StatefulWidget {
   const PendingUser({super.key});
 
   @override
+  State<PendingUser> createState() => _PendingUserState();
+}
+
+class _PendingUserState extends State<PendingUser> {
+  @override
   Widget build(BuildContext context) {
-    final frequentRequest = Provider.of<WebsocketHelper>(context, listen: true);
-    frequentRequest.getDataPending();
+    final secondaryWs = Provider.of<WebsocketHelper>(context, listen: true);
+    secondaryWs.getDataPending();
+    secondaryWs.messageFromGrantedUser(context);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -59,22 +66,31 @@ class PendingUser extends StatelessWidget {
                     debugPrint("${constraints.maxWidth} size");
                     if (constraints.maxWidth < 400) {
                       count = 1;
-                      mainAxisExtent = constraints.maxHeight * 1.4;
+                      mainAxisExtent = constraints.maxWidth * 1.1;
                     } else if (constraints.maxWidth < 500) {
                       count = 2;
-                      mainAxisExtent = constraints.maxWidth * 0.66;
+                      mainAxisExtent = constraints.maxWidth * 0.83;
+                    } else if (constraints.maxWidth < 600) {
+                      count = 2;
+                      mainAxisExtent = constraints.maxWidth * 0.76;
                     } else if (constraints.maxWidth < 700) {
                       count = 3;
-                      mainAxisExtent = constraints.maxWidth * 0.47;
+                      mainAxisExtent = constraints.maxWidth * 0.56;
                     } else if (constraints.maxWidth < 900) {
                       count = 4;
-                      mainAxisExtent = constraints.maxWidth * 0.35;
+                      mainAxisExtent = constraints.maxWidth * 0.45;
                     } else if (constraints.maxWidth < 1000) {
                       count = 5;
-                      mainAxisExtent = constraints.maxWidth * 0.3;
+                      mainAxisExtent = constraints.maxWidth * 0.35;
+                    } else if (constraints.maxWidth < 1200) {
+                      count = 5;
+                      mainAxisExtent = constraints.maxWidth * 0.34;
+                    } else if (constraints.maxWidth > 1200) {
+                      count = 6;
+                      mainAxisExtent = constraints.maxWidth * 0.28;
                     } else {
                       count = 6;
-                      mainAxisExtent = constraints.maxWidth * 0.25;
+                      mainAxisExtent = constraints.maxWidth * 0.29;
                     }
 
                     double sizeImage = constraints.maxWidth / count;

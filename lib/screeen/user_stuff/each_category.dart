@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:werehouse_inventory/card/card_item.dart';
+import 'package:werehouse_inventory/card/card_item_user.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class ScreenCategoryUser extends StatelessWidget {
@@ -56,21 +56,33 @@ class ScreenCategoryUser extends StatelessWidget {
                     double mainAxisExtent;
                     print(constraints.maxWidth);
 
-                    if (constraints.maxWidth < 480) {
+                    if (constraints.maxWidth < 400) {
+                      count = 1;
+                      mainAxisExtent = constraints.maxWidth * 1.1;
+                    } else if (constraints.maxWidth < 500) {
                       count = 2;
-                      mainAxisExtent = constraints.maxWidth * 0.67;
+                      mainAxisExtent = constraints.maxWidth * 0.83;
+                    } else if (constraints.maxWidth < 600) {
+                      count = 2;
+                      mainAxisExtent = constraints.maxWidth * 0.76;
                     } else if (constraints.maxWidth < 700) {
                       count = 3;
-                      mainAxisExtent = constraints.maxWidth * 0.5;
+                      mainAxisExtent = constraints.maxWidth * 0.56;
                     } else if (constraints.maxWidth < 900) {
                       count = 4;
-                      mainAxisExtent = constraints.maxWidth * 0.35;
+                      mainAxisExtent = constraints.maxWidth * 0.45;
                     } else if (constraints.maxWidth < 1000) {
                       count = 5;
-                      mainAxisExtent = constraints.maxWidth * 0.3;
+                      mainAxisExtent = constraints.maxWidth * 0.35;
+                    } else if (constraints.maxWidth < 1200) {
+                      count = 5;
+                      mainAxisExtent = constraints.maxWidth * 0.34;
+                    } else if (constraints.maxWidth > 1200) {
+                      count = 6;
+                      mainAxisExtent = constraints.maxWidth * 0.28;
                     } else {
                       count = 6;
-                      mainAxisExtent = constraints.maxWidth * 0.25;
+                      mainAxisExtent = constraints.maxWidth * 0.29;
                     }
 
                     double sizeImage = constraints.maxWidth / count;
@@ -85,10 +97,9 @@ class ScreenCategoryUser extends StatelessWidget {
                         mainAxisExtent: mainAxisExtent,
                       ),
                       itemBuilder: (context, index) {
-                        return CardItem.forUser(
+                        return CardItemUser(
                           data: snapshot.data![index],
                           imageSize: sizeImage,
-                          isUser: true,
                         );
                       },
                     );
