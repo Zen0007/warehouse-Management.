@@ -12,8 +12,9 @@ import 'package:werehouse_inventory/screeen/admin_stuff/pending_user.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class HomePage extends StatelessWidget {
-  final String? name;
-  HomePage({super.key, this.name});
+  HomePage({
+    super.key,
+  });
 
   final GlobalKey<ScaffoldState> drawer = GlobalKey<ScaffoldState>();
 

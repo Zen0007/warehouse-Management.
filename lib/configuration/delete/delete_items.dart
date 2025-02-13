@@ -54,6 +54,11 @@ class _AddItemState extends State<DeleteItems> {
           _fromKey.currentState!.reset();
         },
       );
+      setState(
+        () {
+          isLoding = false;
+        },
+      );
       return;
     }
     _fromKey.currentState!.save();
@@ -93,6 +98,11 @@ class _AddItemState extends State<DeleteItems> {
               false,
               Theme.of(context).colorScheme.surface,
             );
+            setState(
+              () {
+                isLoding = false;
+              },
+            );
             return;
           } else if (data.containsKey('message')) {
             if (!mounted) return;
@@ -101,6 +111,11 @@ class _AddItemState extends State<DeleteItems> {
               message,
               true,
               Theme.of(context).colorScheme.surface,
+            );
+            setState(
+              () {
+                isLoding = false;
+              },
             );
           }
         }
@@ -136,12 +151,6 @@ class _AddItemState extends State<DeleteItems> {
             ),
             onPressed: () {
               Navigator.pop(context);
-
-              setState(
-                () {
-                  isLoding = false;
-                },
-              );
             },
             child: Text(
               "Yes",
