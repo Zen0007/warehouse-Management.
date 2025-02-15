@@ -239,12 +239,6 @@ class _MiddleScreenState extends State<FirstScreen> {
             Expanded(
               flex: 4,
               child: Container(
-                color: Theme.of(context).colorScheme.secondary,
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Container(
                 color: Theme.of(context).colorScheme.primary,
               ),
             ),
@@ -252,6 +246,12 @@ class _MiddleScreenState extends State<FirstScreen> {
               flex: 2,
               child: Container(
                 color: Theme.of(context).colorScheme.secondary,
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Container(
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ],
@@ -271,7 +271,7 @@ class _MiddleScreenState extends State<FirstScreen> {
           child: Container(
             width: constraints.maxWidth * 0.35,
             height: constraints.maxWidth * 0.15,
-            color: Theme.of(context).colorScheme.primary,
+            color: Theme.of(context).colorScheme.secondary,
           ),
         )
       ],
