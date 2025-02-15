@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:werehouse_inventory/data type/borrow_user.dart';
+import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class CardBorrow extends StatelessWidget {
   const CardBorrow({
@@ -190,7 +192,98 @@ class CardBorrow extends StatelessWidget {
                 ),
               ),
             ),
-          )
+          ),
+          Positioned(
+            right: 1.5,
+            top: 0.5,
+            child: Consumer<WebsocketHelper>(
+              builder: (context, wsHelper, child) {
+                return InkWell(
+                  child: Icon(
+                    Icons.backup,
+                    color: const Color.fromARGB(255, 253, 253, 253),
+                    size: 40,
+                  ),
+                  onTap: () {
+                    wsHelper.sendMessage(
+                      {
+                        "endpoint": "waitPermision",
+                        'data': {
+                          "name": data.nameUser ?? '',
+                        }
+                      },
+                    );
+                    deletedUserGratend(context, wsHelper);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void deletedUserGratend(
+      BuildContext context, WebsocketHelper wsHelper) async {
+    await for (final message in wsHelper.streamControllerAll.stream) {
+      if (message['endpoint'] == "WAITPERMISION") {
+        if (message.containsKey('message')) {
+          if (!context.mounted) return;
+          messages(
+            context,
+            true,
+            message['message'],
+            Theme.of(context).colorScheme.onSurface,
+          );
+          return;
+        } else {
+          if (!context.mounted) return;
+          messages(
+            context,
+            true,
+            message['warning'],
+            Theme.of(context).colorScheme.onError,
+          );
+        }
+      }
+    }
+  }
+
+  Future<dynamic> messages(BuildContext context, bool isMessage,
+      String response, Color backgroundColor) {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog.adaptive(
+        backgroundColor: backgroundColor,
+        title: Text(
+          isMessage ? "MESSAGE" : "WARNING",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        content: Text(
+          response,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        actions: [
+          OutlinedButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text(
+              "Yes",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
         ],
       ),
     );
