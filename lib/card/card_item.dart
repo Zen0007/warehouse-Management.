@@ -14,7 +14,7 @@ class CardItem extends StatelessWidget {
   final double imageSize;
 
   Future<dynamic> messages(BuildContext context, bool isMessage,
-      String response, Color color, Color backgroundColor) {
+      String response, Color backgroundColor) {
     return showDialog(
       context: context,
       barrierDismissible: false,
@@ -23,14 +23,14 @@ class CardItem extends StatelessWidget {
         title: Text(
           isMessage ? "MESSAGE" : "WARNING",
           style: TextStyle(
-            color: color,
+            color: Colors.white,
             fontWeight: FontWeight.w500,
           ),
         ),
         content: Text(
           response,
           style: TextStyle(
-            color: color,
+            color: Colors.white,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -42,7 +42,7 @@ class CardItem extends StatelessWidget {
             child: Text(
               "Yes",
               style: TextStyle(
-                color: color,
+                color: Colors.white,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -61,7 +61,6 @@ class CardItem extends StatelessWidget {
           true,
           message['message'],
           Theme.of(context).colorScheme.onSurface,
-          Theme.of(context).colorScheme.surface,
         );
         return;
       } else {
@@ -71,7 +70,6 @@ class CardItem extends StatelessWidget {
           true,
           message['warning'],
           Theme.of(context).colorScheme.onError,
-          Theme.of(context).colorScheme.error,
         );
       }
     }
