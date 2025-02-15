@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:werehouse_inventory/data type/borrow_user.dart';
@@ -20,6 +22,7 @@ class WebsocketHelper with ChangeNotifier {
   final Duration _reconnectDelay = Duration(seconds: 5);
   final streamControllerAll = StreamController<Map>.broadcast();
   final streamCollectionAdmin = StreamController<List>.broadcast();
+  final stramCollectionAvaileble = StreamController<List>.broadcast();
   final streamKeyResult = StreamController<List>.broadcast();
   final streamBorrow = StreamController<List>.broadcast();
   final streamPending = StreamController<List>.broadcast();
@@ -28,6 +31,8 @@ class WebsocketHelper with ChangeNotifier {
   final addNewData = StreamController<Map>.broadcast();
   final deleteCollection = StreamController<Map>.broadcast();
   final deleteItem = StreamController<Map>.broadcast();
+  final userApproveReturn = StreamController<Map>.broadcast();
+  final verifikasiHasLogin = StreamController<Map>.broadcast();
 
   @override
   void dispose() {
@@ -42,6 +47,8 @@ class WebsocketHelper with ChangeNotifier {
     addNewData.close();
     deleteCollection.close();
     deleteItem.close();
+    userApproveReturn.close();
+    verifikasiHasLogin.close();
     _reconnectTimer!.cancel();
     super.dispose();
   }
@@ -131,6 +138,18 @@ class WebsocketHelper with ChangeNotifier {
             case "GETDATAPENDING":
               notifyListeners();
               streamPending.sink.add(streamData['message']);
+              break;
+            case "GRANTED":
+              notifyListeners();
+              userApproveReturn.sink.add(streamData);
+              break;
+            case "VERIFIKASI":
+              notifyListeners();
+              verifikasiHasLogin.sink.add(streamData);
+              break;
+            case "GETDATACATEGORYAVAILEBLE":
+              notifyListeners();
+              stramCollectionAvaileble.sink.add(streamData['message']);
               break;
             default:
               notifyListeners();
@@ -326,7 +345,6 @@ class WebsocketHelper with ChangeNotifier {
 
       await for (final status in streamControllerAll.stream) {
         if (status['endpoint'] == "VERIFIKASI") {
-          notifyListeners();
           yield status['status'];
         }
       }
@@ -406,6 +424,7 @@ class WebsocketHelper with ChangeNotifier {
   Stream<List<Index>> indexCategoryForUser(String title) async* {
     await for (var index in streamControllerAll.stream) {
       if (index['endpoint'] == "GETDATACATEGORYAVAILEBLE") {
+        print(index['message'].length);
         if (index['message'].isEmpty) {
           yield [];
         }
@@ -454,6 +473,112 @@ class WebsocketHelper with ChangeNotifier {
       print(e);
       debugPrint("$s strackTrace");
     }
+  }
+
+  void messageFromGrantedUser(BuildContext context) async {
+    await for (var data in userApproveReturn.stream) {
+      if (!context.mounted) {
+        return;
+      }
+
+      if (data.containsKey("message")) {
+        alertMessage(
+            context,
+            data['message'],
+            Theme.of(context).colorScheme.onError,
+            Theme.of(context).colorScheme.secondary);
+      }
+      if (data.containsKey("warning")) {
+        alertMessage(
+            context,
+            data['warning'],
+            Theme.of(context).colorScheme.onError,
+            Theme.of(context).colorScheme.error);
+      }
+    }
+  }
+
+  Future<dynamic> isReconnects(BuildContext context) async {
+    print(" is working");
+    print("alert ");
+    return showDialog(
+      context: context,
+      builder: (context) {
+        Timer(Duration(seconds: 10), () {
+          Navigator.of(context).pop();
+        });
+        return Stack(
+          children: [
+            Positioned(
+              top: 50,
+              child: Container(
+                width: 150,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                padding: EdgeInsets.only(
+                  left: 5,
+                  right: 5,
+                ),
+                child: Center(
+                  child: Text(
+                    "koneksi server loss harap refress",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      decoration: TextDecoration.none,
+                    ),
+                  ),
+                ),
+              ),
+            )
+          ],
+        );
+      },
+    );
+  }
+
+  Future alertMessage(BuildContext context, String? data, Color color,
+      Color backgroundColor) async {
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+              backgroundColor: backgroundColor,
+              title: Text(
+                'WARNING',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              content: Text(
+                "$data",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              actions: [
+                OutlinedButton(
+                  style: TextButton.styleFrom(
+                    backgroundColor: backgroundColor,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text(
+                    "Yes",
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ));
   }
 
   List<BorrowUser> processPending(List data) {
@@ -513,6 +638,24 @@ class WebsocketHelper with ChangeNotifier {
       }
     }
 
+    return data;
+  }
+
+  List<Index> processForUser(List index, String title) {
+    final List<Index> data = [];
+    for (var i = 0; i < index.length; i++) {
+      if (index[i][title] != null) {
+        for (var entry in index[i][title].entries) {
+          final listInt = List<int>.from(entry.value['image'] as List);
+          final uint8list = Uint8List.fromList(listInt);
+          final index =
+              Index.fromJson(entry.value, entry.key, title, uint8list);
+          data.add(index);
+        }
+
+        return data;
+      }
+    }
     return data;
   }
 
