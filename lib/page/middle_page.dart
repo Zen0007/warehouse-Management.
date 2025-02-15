@@ -23,9 +23,8 @@ class _MiddlePageState extends State<MiddlePage> {
               print("${snapshot.data} data middle");
               if (snapshot.hasData) {
                 return const UserHasBorrows();
-              } else {
-                return const FirstScreen();
               }
+              return const FirstScreen();
             },
           );
         },
