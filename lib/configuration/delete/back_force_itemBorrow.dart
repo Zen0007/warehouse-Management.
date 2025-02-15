@@ -56,7 +56,7 @@ class _AddNewAdminState extends State<DeleteUserGranted> {
 
       wsHelper.sendMessage(
         {
-          "endpoint": "deleteUserGratend",
+          "endpoint": "waitPermision",
           "data": {
             "name": name,
           },
@@ -64,7 +64,7 @@ class _AddNewAdminState extends State<DeleteUserGranted> {
       );
 
       await for (var data in wsHelper.streamControllerAll.stream) {
-        if (data['endpoint'] == "FREEDATAGRATEND") {
+        if (data['endpoint'] == "WAITPERMISION") {
           if (data.containsKey("warning")) {
             final warning = data['warning'];
 
@@ -195,7 +195,7 @@ class _AddNewAdminState extends State<DeleteUserGranted> {
               key: _fromKey,
               child: TextFormField(
                 decoration: InputDecoration(
-                  hintText: " new admin",
+                  hintText: " name user",
                   counterStyle: const TextStyle(
                     backgroundColor: Colors.black,
                   ),
@@ -265,7 +265,7 @@ class _AddNewAdminState extends State<DeleteUserGranted> {
                   ),
                   child: Center(
                     child: Text(
-                      "Delete Use",
+                      "sumbit",
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onPrimary,
                       ),
@@ -292,7 +292,7 @@ class _AddNewAdminState extends State<DeleteUserGranted> {
             key: _fromKey,
             child: TextFormField(
               decoration: InputDecoration(
-                hintText: " new admin",
+                hintText: " name user",
                 counterStyle: const TextStyle(
                   backgroundColor: Colors.black,
                 ),
@@ -361,7 +361,7 @@ class _AddNewAdminState extends State<DeleteUserGranted> {
                   ),
                   child: Center(
                     child: Text(
-                      "Delete User",
+                      "sumbit",
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onPrimary,
                       ),
