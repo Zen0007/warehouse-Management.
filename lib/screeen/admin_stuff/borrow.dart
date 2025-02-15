@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werehouse_inventory/card/card_borrow.dart';
 import 'package:werehouse_inventory/data%20type/borrow_user.dart';
+
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class BorrowUserPage extends StatefulWidget {
@@ -65,7 +66,7 @@ class _BorrowUserPageState extends State<BorrowUserPage> {
                     debugPrint("${constraints.maxWidth} size");
                     if (constraints.maxWidth < 400) {
                       count = 1;
-                      mainAxisExtent = constraints.maxWidth * 1.1;
+                      mainAxisExtent = constraints.maxWidth * 1.4;
                     } else if (constraints.maxWidth < 500) {
                       count = 2;
                       mainAxisExtent = constraints.maxWidth * 0.83;
@@ -77,10 +78,10 @@ class _BorrowUserPageState extends State<BorrowUserPage> {
                       mainAxisExtent = constraints.maxWidth * 0.56;
                     } else if (constraints.maxWidth < 900) {
                       count = 4;
-                      mainAxisExtent = constraints.maxWidth * 0.45;
+                      mainAxisExtent = constraints.maxWidth * 0.44;
                     } else if (constraints.maxWidth < 1000) {
-                      count = 5;
-                      mainAxisExtent = constraints.maxWidth * 0.35;
+                      count = 4;
+                      mainAxisExtent = constraints.maxWidth * 0.4;
                     } else if (constraints.maxWidth < 1200) {
                       count = 5;
                       mainAxisExtent = constraints.maxWidth * 0.34;

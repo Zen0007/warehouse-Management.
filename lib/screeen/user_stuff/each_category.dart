@@ -1,11 +1,69 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werehouse_inventory/card/card_item_user.dart';
+import 'package:werehouse_inventory/data%20type/index.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
-class ScreenCategoryUser extends StatelessWidget {
+class ScreenCategoryUser extends StatefulWidget {
   const ScreenCategoryUser({super.key, required this.title});
   final String title;
+
+  @override
+  State<ScreenCategoryUser> createState() => _ScreenCategoryUserState();
+}
+
+class _ScreenCategoryUserState extends State<ScreenCategoryUser> {
+  final index = [
+    Index(
+      name: "mikrotik",
+      status: "available",
+      label: "L-093",
+      image: Uint8List.fromList([]),
+      category: 'mikrotik',
+      index: "1",
+    ),
+    Index(
+      name: "mikrotik",
+      status: "available",
+      label: "L-093",
+      image: Uint8List.fromList([]),
+      category: 'mikrotik',
+      index: "1",
+    ),
+    Index(
+      name: "mikrotik",
+      status: "available",
+      label: "L-093",
+      image: Uint8List.fromList([]),
+      category: 'mikrotik',
+      index: "1",
+    ),
+    Index(
+      name: "mikrotik",
+      status: "available",
+      label: "L-093",
+      image: Uint8List.fromList([]),
+      category: 'mikrotik',
+      index: "1",
+    ),
+    Index(
+      name: "mikrotik",
+      status: "available",
+      label: "L-093",
+      image: Uint8List.fromList([]),
+      category: 'mikrotik',
+      index: "1",
+    ),
+    Index(
+      name: "mikrotik",
+      status: "available",
+      label: "L-093",
+      image: Uint8List.fromList([]),
+      category: 'mikrotik',
+      index: "1",
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +73,7 @@ class ScreenCategoryUser extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
         title: Text(
-          title,
+          widget.title,
           style: TextStyle(
             color: Theme.of(context).colorScheme.onPrimary,
           ),
@@ -32,7 +90,7 @@ class ScreenCategoryUser extends StatelessWidget {
       body: Consumer<WebsocketHelper>(
         builder: (contex, wsHelper, child) {
           return StreamBuilder(
-            stream: wsHelper.indexCategoryForUser(title),
+            stream: wsHelper.stramCollectionAvaileble.stream,
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return const Center(
@@ -50,6 +108,8 @@ class ScreenCategoryUser extends StatelessWidget {
               }
 
               if (snapshot.hasData) {
+                final index =
+                    wsHelper.processForUser(snapshot.data!, widget.title);
                 return LayoutBuilder(
                   builder: (context, constraints) {
                     int count;
@@ -74,12 +134,6 @@ class ScreenCategoryUser extends StatelessWidget {
                     } else if (constraints.maxWidth < 1000) {
                       count = 5;
                       mainAxisExtent = constraints.maxWidth * 0.35;
-                    } else if (constraints.maxWidth < 1200) {
-                      count = 5;
-                      mainAxisExtent = constraints.maxWidth * 0.34;
-                    } else if (constraints.maxWidth > 1200) {
-                      count = 6;
-                      mainAxisExtent = constraints.maxWidth * 0.28;
                     } else {
                       count = 6;
                       mainAxisExtent = constraints.maxWidth * 0.29;
@@ -88,7 +142,7 @@ class ScreenCategoryUser extends StatelessWidget {
                     double sizeImage = constraints.maxWidth / count;
                     return GridView.builder(
                       shrinkWrap: true,
-                      itemCount: snapshot.data!.length,
+                      itemCount: index.length,
                       padding: const EdgeInsets.all(10),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: count,
@@ -96,9 +150,9 @@ class ScreenCategoryUser extends StatelessWidget {
                         crossAxisSpacing: 1,
                         mainAxisExtent: mainAxisExtent,
                       ),
-                      itemBuilder: (context, index) {
+                      itemBuilder: (context, indexs) {
                         return CardItemUser(
-                          data: snapshot.data![index],
+                          data: index[indexs],
                           imageSize: sizeImage,
                         );
                       },

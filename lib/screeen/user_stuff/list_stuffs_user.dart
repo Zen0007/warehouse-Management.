@@ -165,7 +165,7 @@ class _ListStaffUserState extends State<ListStaffUser> {
           MaterialPageRoute(builder: (context) => FormForUser()),
         ),
         child: Icon(
-          Icons.filter_list,
+          Icons.article_outlined,
           color: const Color.fromARGB(255, 0, 0, 0),
         ),
       ),
