@@ -108,6 +108,9 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
 
   @override
   Widget build(BuildContext context) {
+    final secondaryWs = Provider.of<WebsocketHelper>(context, listen: true);
+    secondaryWs.sendRequestUserHasBorrow();
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Stack(
@@ -117,10 +120,13 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
               Consumer<WebsocketHelper>(
                 builder: (contex, wsHelper, child) {
                   return StreamBuilder(
-                    stream: wsHelper.userHasBorrow(),
+                    stream: wsHelper.streamUserHasBorrow.stream,
                     builder: (context, snapshot) {
                       if (snapshot.hasData) {
-                        if (snapshot.data != null) {
+                        final userHasBorrow =
+                            wsHelper.processUserHasBorrow(snapshot.data!);
+
+                        if (userHasBorrow != null) {
                           return LayoutBuilder(
                             builder: (context, constraints) {
                               int count;
@@ -161,7 +167,7 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(25),
                                         child: Image.memory(
-                                          snapshot.data!.imageUser,
+                                          userHasBorrow.imageUser,
                                           height: sizeImage * 0.76,
                                           width: sizeImage * 0.86,
                                           fit: BoxFit.cover,
@@ -172,29 +178,40 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
                                   SizedBox(
                                     height: constraints.maxWidth * 0.02,
                                   ),
-                                  Row(
-                                    children: [
-                                      Padding(
-                                        padding: EdgeInsets.only(
-                                            left: constraints.maxWidth * 0.01),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: [
-                                            nameTitle(constraints, context,
-                                                snapshot.data!.nameUser!),
-                                            nameTitle(constraints, context,
-                                                snapshot.data!.classUser!),
-                                            nameTitle(constraints, context,
-                                                snapshot.data!.nisn!),
-                                            nameTitle(constraints, context,
-                                                snapshot.data!.status!),
-                                            nameTitle(constraints, context,
-                                                snapshot.data!.nameTeacher!),
-                                          ],
+                                  Padding(
+                                    padding: EdgeInsets.only(
+                                        left: constraints.maxWidth * 0.01),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        nameTitle(
+                                          constraints,
+                                          context,
+                                          userHasBorrow.nameUser!,
                                         ),
-                                      ),
-                                    ],
+                                        nameTitle(
+                                          constraints,
+                                          context,
+                                          userHasBorrow.classUser!,
+                                        ),
+                                        nameTitle(
+                                          constraints,
+                                          context,
+                                          userHasBorrow.nisn!,
+                                        ),
+                                        nameTitle(
+                                          constraints,
+                                          context,
+                                          userHasBorrow.status!,
+                                        ),
+                                        nameTitle(
+                                          constraints,
+                                          context,
+                                          userHasBorrow.nameTeacher!,
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                   Container(
                                     margin:
@@ -214,7 +231,7 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
                                     ),
                                   ),
                                   for (var i = 0;
-                                      i < snapshot.data!.item.length;
+                                      i < userHasBorrow.item.length;
                                       i++)
                                     Container(
                                       margin: EdgeInsets.only(
@@ -247,7 +264,7 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
                                             ),
                                             child: Center(
                                               child: Text(
-                                                snapshot.data!.item[i].index,
+                                                userHasBorrow.item[i].index,
                                                 style: TextStyle(
                                                   color: Theme.of(context)
                                                       .colorScheme
@@ -267,7 +284,7 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
                                                 MainAxisAlignment.center,
                                             children: [
                                               Text(
-                                                snapshot.data!.item[i].nameItem,
+                                                userHasBorrow.item[i].nameItem,
                                                 style: TextStyle(
                                                   fontSize:
                                                       constraints.maxWidth *
@@ -280,7 +297,7 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
                                                     constraints.maxWidth * 0.01,
                                               ),
                                               Text(
-                                                snapshot.data!.item[i].category,
+                                                userHasBorrow.item[i].category,
                                                 style: TextStyle(
                                                   fontSize:
                                                       constraints.maxWidth *
@@ -294,7 +311,7 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
                                             width: constraints.maxWidth * 0.077,
                                           ),
                                           Text(
-                                            snapshot.data!.item[i].label
+                                            userHasBorrow.item[i].label
                                                 .toUpperCase(),
                                             style: TextStyle(
                                               fontSize:
@@ -359,10 +376,7 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
   }
 
   Container nameTitle(
-    BoxConstraints constraints,
-    BuildContext context,
-    String title,
-  ) {
+      BoxConstraints constraints, BuildContext context, String title) {
     return Container(
       margin: EdgeInsets.only(
           left: constraints.maxWidth * 0.025,
