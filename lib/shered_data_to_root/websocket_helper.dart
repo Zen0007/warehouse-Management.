@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:werehouse_inventory/data type/borrow_user.dart';
@@ -27,12 +25,14 @@ class WebsocketHelper with ChangeNotifier {
   final streamBorrow = StreamController<List>.broadcast();
   final streamPending = StreamController<List>.broadcast();
   final streamGranted = StreamController<List>.broadcast();
+  final streamUserHasBorrow = StreamController<Map>.broadcast();
 
   final addNewData = StreamController<Map>.broadcast();
   final deleteCollection = StreamController<Map>.broadcast();
   final deleteItem = StreamController<Map>.broadcast();
   final userApproveReturn = StreamController<Map>.broadcast();
   final verifikasiHasLogin = StreamController<Map>.broadcast();
+  final checkUserHasBorrows = StreamController<String>.broadcast();
 
   @override
   void dispose() {
@@ -43,12 +43,14 @@ class WebsocketHelper with ChangeNotifier {
     streamBorrow.close();
     streamPending.close();
     streamGranted.close();
+    streamUserHasBorrow.close();
 
     addNewData.close();
     deleteCollection.close();
     deleteItem.close();
     userApproveReturn.close();
     verifikasiHasLogin.close();
+    checkUserHasBorrows.close();
     _reconnectTimer!.cancel();
     super.dispose();
   }
@@ -150,6 +152,15 @@ class WebsocketHelper with ChangeNotifier {
             case "GETDATACATEGORYAVAILEBLE":
               notifyListeners();
               stramCollectionAvaileble.sink.add(streamData['message']);
+              break;
+            case "HASBORROW":
+              notifyListeners();
+              streamUserHasBorrow.sink.add(streamData['message']);
+              break;
+            case "CHECKUSER":
+              checkUserHasBorrows.sink.add(streamData['message']);
+              notifyListeners();
+              print(streamData);
               break;
             default:
               notifyListeners();
@@ -265,6 +276,48 @@ class WebsocketHelper with ChangeNotifier {
     }
   }
 
+  void checkUserHasBorrow() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final getToken = prefs.getString('hasBorrow');
+    final now = DateTime.now();
+    final lastRequest = DateTime.parse(
+      prefs.getString('RequestUser') ??
+          now.subtract(Duration(seconds: 2)).toIso8601String(),
+    );
+    if (now.difference(lastRequest).inSeconds >= 2) {
+      print("tokenUser $getToken");
+      if (getToken != null) {
+        channel?.sink.add(
+          json.encode(
+            {
+              "endpoint": "checkUserBorrow",
+              "data": {
+                "name": getToken,
+              }
+            },
+          ),
+        );
+      }
+      prefs.setString('RequestUser', now.toIso8601String());
+    }
+  }
+
+// for first request
+  void userHasBorrowsOnce() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final getToken = prefs.getString('hasBorrow');
+    print("$getToken user name");
+
+    channel?.sink.add(json.encode(
+      {
+        "endpoint": "hasBorrowOnce",
+        "data": {
+          "name": getToken ?? '',
+        }
+      },
+    ));
+  }
+
   void testDeleteUser() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.remove('hasBorrow');
@@ -305,43 +358,25 @@ class WebsocketHelper with ChangeNotifier {
       DateTime now = DateTime.now();
       DateTime lastRequest = DateTime.parse(
         prefs.getString('lastRequest') ??
-            now.subtract(Duration(hours: 1)).toIso8601String(),
+            now.subtract(Duration(minutes: 10)).toIso8601String(),
       );
 
       // debugPrint("$getToken token wsHelper");
       // debugPrint("${prefs.getString('lastRequest')} exp wsHelper");
 
-      if (now.difference(lastRequest).inHours >= 1) {
-        channel?.sink.add(json.encode(
-          {
-            "endpoint": "verifikasi",
-            "data": {
-              "token": getToken,
-            }
-          },
-        ));
-
+      if (now.difference(lastRequest).inMinutes >= 10) {
+        if (getToken != null) {
+          channel?.sink.add(json.encode(
+            {
+              "endpoint": "verifikasi",
+              "data": {
+                "token": getToken,
+              }
+            },
+          ));
+        }
         prefs.setString('lastRequest', now.toIso8601String());
       }
-
-      DateTime nextRequest = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        now.hour + 1,
-      );
-      Duration delayed = nextRequest.difference(now);
-      Timer(
-        delayed,
-        () => channel?.sink.add(json.encode(
-          {
-            "endpoint": "verifikasi",
-            "data": {
-              "token": getToken,
-            }
-          },
-        )),
-      );
 
       await for (final status in streamControllerAll.stream) {
         if (status['endpoint'] == "VERIFIKASI") {
@@ -351,50 +386,6 @@ class WebsocketHelper with ChangeNotifier {
     } catch (e) {
       debugPrint("$e error in verifikasi");
     }
-  }
-
-  Stream<String> checkUserHasBorrow() async* {
-    try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final getToken = prefs.getString('hasBorrow');
-      Future.delayed(Duration(seconds: 3), () {
-        channel?.sink.add(json.encode(
-          {
-            "endpoint": "checkUserBorrow",
-            "data": {
-              "name": getToken ?? '',
-            }
-          },
-        ));
-      });
-
-      await for (final status in streamControllerAll.stream) {
-        if (status['endpoint'] == "CHECKUSER") {
-          final String dataUser = status['message'];
-          notifyListeners();
-          yield dataUser;
-        }
-      }
-    } catch (e, s) {
-      print(e);
-      debugPrint("$s strackTrace");
-    }
-  }
-
-// for first request
-  void userHasBorrowsOnce() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final getToken = prefs.getString('hasBorrow');
-    print("$getToken user name");
-
-    channel?.sink.add(json.encode(
-      {
-        "endpoint": "hasBorrowOnce",
-        "data": {
-          "name": getToken ?? '',
-        }
-      },
-    ));
   }
 
   Stream<Map> responseLogin() async* {
@@ -421,39 +412,13 @@ class WebsocketHelper with ChangeNotifier {
     }
   }
 
-  Stream<List<Index>> indexCategoryForUser(String title) async* {
-    await for (var index in streamControllerAll.stream) {
-      if (index['endpoint'] == "GETDATACATEGORYAVAILEBLE") {
-        print(index['message'].length);
-        if (index['message'].isEmpty) {
-          yield [];
-        }
-        for (var i = 0; i < index['message'].length; i++) {
-          if (index['message'][i][title] != null) {
-            final List<Index> data = [];
-            notifyListeners();
-            yield data;
-          }
-        }
-      }
-    }
-  }
-
-  Stream<BorrowUser> userHasBorrow() async* {
+  @Deprecated("this code is not proper ")
+  Stream<BorrowUser> userHasBorrows() async* {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final getToken = prefs.getString('hasBorrow');
     print("$getToken user name");
 
     try {
-      channel?.sink.add(json.encode(
-        {
-          "endpoint": "hasBorrow",
-          "data": {
-            "name": getToken ?? '',
-          }
-        },
-      ));
-
       await for (final status in streamControllerAll.stream) {
         if (status['endpoint'] == "HASBORROW") {
           for (var data in status['message'].values) {
@@ -475,110 +440,31 @@ class WebsocketHelper with ChangeNotifier {
     }
   }
 
-  void messageFromGrantedUser(BuildContext context) async {
-    await for (var data in userApproveReturn.stream) {
-      if (!context.mounted) {
-        return;
-      }
+  void sendRequestUserHasBorrow() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final getToken = prefs.getString('hasBorrow');
+    channel?.sink.add(json.encode(
+      {
+        "endpoint": "hasBorrow",
+        "data": {
+          "name": getToken ?? '',
+        }
+      },
+    ));
+  }
 
-      if (data.containsKey("message")) {
-        alertMessage(
-            context,
-            data['message'],
-            Theme.of(context).colorScheme.onError,
-            Theme.of(context).colorScheme.secondary);
-      }
-      if (data.containsKey("warning")) {
-        alertMessage(
-            context,
-            data['warning'],
-            Theme.of(context).colorScheme.onError,
-            Theme.of(context).colorScheme.error);
+  BorrowUser? processUserHasBorrow(Map status) {
+    BorrowUser? user;
+    for (var data in status.values) {
+      if (data is Map) {
+        final List<int> listInt = List<int>.from(data['imageSelfie'] as List);
+        final Uint8List uint8list = Uint8List.fromList(listInt);
+
+        user = BorrowUser.from(data, uint8list);
+        return user;
       }
     }
-  }
-
-  Future<dynamic> isReconnects(BuildContext context) async {
-    print(" is working");
-    print("alert ");
-    return showDialog(
-      context: context,
-      builder: (context) {
-        Timer(Duration(seconds: 10), () {
-          Navigator.of(context).pop();
-        });
-        return Stack(
-          children: [
-            Positioned(
-              top: 50,
-              child: Container(
-                width: 150,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                padding: EdgeInsets.only(
-                  left: 5,
-                  right: 5,
-                ),
-                child: Center(
-                  child: Text(
-                    "koneksi server loss harap refress",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      decoration: TextDecoration.none,
-                    ),
-                  ),
-                ),
-              ),
-            )
-          ],
-        );
-      },
-    );
-  }
-
-  Future alertMessage(BuildContext context, String? data, Color color,
-      Color backgroundColor) async {
-    return showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-              backgroundColor: backgroundColor,
-              title: Text(
-                'WARNING',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              content: Text(
-                "$data",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              actions: [
-                OutlinedButton(
-                  style: TextButton.styleFrom(
-                    backgroundColor: backgroundColor,
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Text(
-                    "Yes",
-                    style: TextStyle(
-                      color: color,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ));
+    return user;
   }
 
   List<BorrowUser> processPending(List data) {
