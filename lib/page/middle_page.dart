@@ -14,19 +14,17 @@ class MiddlePage extends StatefulWidget {
 class _MiddlePageState extends State<MiddlePage> {
   @override
   Widget build(BuildContext context) {
+    final secondaryWs = Provider.of<WebsocketHelper>(context, listen: true);
+    secondaryWs.checkUserHasBorrow();
     return Scaffold(
-      body: Consumer<WebsocketHelper>(
-        builder: (context, wsHelper, child) {
-          return StreamBuilder(
-            stream: wsHelper.checkUserHasBorrow(),
-            builder: (context, snapshot) {
-              print("${snapshot.data} data middle");
-              if (snapshot.hasData) {
-                return const UserHasBorrows();
-              }
-              return const FirstScreen();
-            },
-          );
+      body: StreamBuilder(
+        stream: secondaryWs.checkUserHasBorrows.stream,
+        builder: (context, snapshot) {
+          print("${snapshot.hasData} data middle");
+          if (snapshot.hasData) {
+            return UserHasBorrows();
+          }
+          return FirstScreen();
         },
       ),
     );

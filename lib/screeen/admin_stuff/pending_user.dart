@@ -16,13 +16,12 @@ class _PendingUserState extends State<PendingUser> {
   Widget build(BuildContext context) {
     final secondaryWs = Provider.of<WebsocketHelper>(context, listen: true);
     secondaryWs.getDataPending();
-    secondaryWs.messageFromGrantedUser(context);
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
         title: Text(
-          "Daftar  Peminjam",
+          "Menggu Ijin Admin",
           style: TextStyle(
             color: Theme.of(context).colorScheme.onPrimary,
           ),

@@ -118,22 +118,28 @@ class _ScreenCategoryUserState extends State<ScreenCategoryUser> {
 
                     if (constraints.maxWidth < 400) {
                       count = 1;
-                      mainAxisExtent = constraints.maxWidth * 1.1;
+                      mainAxisExtent = constraints.maxWidth * 1.5;
                     } else if (constraints.maxWidth < 500) {
                       count = 2;
-                      mainAxisExtent = constraints.maxWidth * 0.83;
+                      mainAxisExtent = constraints.maxWidth * 0.75;
                     } else if (constraints.maxWidth < 600) {
                       count = 2;
-                      mainAxisExtent = constraints.maxWidth * 0.76;
+                      mainAxisExtent = constraints.maxWidth * 0.7;
                     } else if (constraints.maxWidth < 700) {
                       count = 3;
-                      mainAxisExtent = constraints.maxWidth * 0.56;
+                      mainAxisExtent = constraints.maxWidth * 0.5;
                     } else if (constraints.maxWidth < 900) {
                       count = 4;
-                      mainAxisExtent = constraints.maxWidth * 0.45;
+                      mainAxisExtent = constraints.maxWidth * 0.4;
                     } else if (constraints.maxWidth < 1000) {
                       count = 5;
                       mainAxisExtent = constraints.maxWidth * 0.35;
+                    } else if (constraints.maxWidth < 1200) {
+                      count = 5;
+                      mainAxisExtent = constraints.maxWidth * 0.3;
+                    } else if (constraints.maxWidth > 1200) {
+                      count = 6;
+                      mainAxisExtent = constraints.maxWidth * 0.25;
                     } else {
                       count = 6;
                       mainAxisExtent = constraints.maxWidth * 0.29;
