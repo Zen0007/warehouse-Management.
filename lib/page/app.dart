@@ -27,12 +27,11 @@ class App extends StatelessWidget {
               /*
                check if token user is valide else is token invalide and nothing return
               */
-              print("is chek");
 
               if (snapshot.hasData) {
                 return HomePage();
               }
-              return const MiddlePage();
+              return MiddlePage();
             },
           );
         },
