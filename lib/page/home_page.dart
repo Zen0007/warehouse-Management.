@@ -9,6 +9,7 @@ import 'package:werehouse_inventory/screeen/admin_stuff/grantend_user.dart';
 import 'package:werehouse_inventory/screeen/user_stuff/grid_for_key.dart';
 import 'package:werehouse_inventory/screeen/admin_stuff/category_admin.dart';
 import 'package:werehouse_inventory/screeen/admin_stuff/pending_user.dart';
+import 'package:werehouse_inventory/shered_data_to_root/auth_service.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class HomePage extends StatelessWidget {
@@ -119,6 +120,10 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final secondaryWs = Provider.of<AuthService>(context, listen: true);
+    secondaryWs.removeTokenIfExp();
+    secondaryWs.chekVerifikasi();
+
     final size = MediaQuery.of(context).size;
 
     return Scaffold(

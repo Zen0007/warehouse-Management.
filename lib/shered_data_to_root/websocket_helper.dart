@@ -3,8 +3,9 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:werehouse_inventory/data type/borrow_user.dart';
 import 'package:werehouse_inventory/data%20type/index.dart';
+import 'package:werehouse_inventory/data type/borrow_user.dart';
+
 import 'package:werehouse_inventory/data%20type/key_category_list.dart';
 
 class WebsocketHelper with ChangeNotifier {
@@ -17,10 +18,11 @@ class WebsocketHelper with ChangeNotifier {
   Timer? _reconnectTimer;
   WebSocketChannel? channel;
   bool isConnected = false;
+
   final Duration _reconnectDelay = Duration(seconds: 5);
   final streamControllerAll = StreamController<Map>.broadcast();
   final streamCollectionAdmin = StreamController<List>.broadcast();
-  final stramCollectionAvaileble = StreamController<List>.broadcast();
+  final streamCollectionAvaileble = StreamController<List>.broadcast();
   final streamKeyResult = StreamController<List>.broadcast();
   final streamBorrow = StreamController<List>.broadcast();
   final streamPending = StreamController<List>.broadcast();
@@ -39,6 +41,7 @@ class WebsocketHelper with ChangeNotifier {
     channel?.sink.close();
     streamControllerAll.close();
     streamCollectionAdmin.close();
+    streamCollectionAvaileble.close();
     streamKeyResult.close();
     streamBorrow.close();
     streamPending.close();
@@ -100,90 +103,96 @@ class WebsocketHelper with ChangeNotifier {
     }
   }
 
+  void processConnectionServer(Stream? connections) async {
+    connections?.listen(
+      (message) async {
+        // process code in another thread
+        final streamData = await compute(jsonDecodes, message);
+
+        switch (streamData['endpoint']) {
+          case 'GETDATAALLCATEGORY':
+            notifyListeners();
+            streamCollectionAdmin.sink.add(streamData['message']);
+            break;
+          case "GETDATAALLKEYCATEGORY":
+            notifyListeners();
+            streamKeyResult.sink.add(streamData['message']);
+            break;
+          case "ADDNEWITEM":
+            notifyListeners();
+            addNewData.sink.add(streamData);
+            break;
+          case "DELETECATEGORY":
+            notifyListeners();
+            deleteCollection.sink.add(streamData);
+            break;
+          case "DELETEITEM":
+            notifyListeners();
+            deleteItem.sink.add(streamData);
+            break;
+          case "GETDATABORROW":
+            notifyListeners();
+            streamBorrow.sink.add(streamData['message']);
+            break;
+          case "GETDATAGRANTED":
+            notifyListeners();
+            streamGranted.sink.add(streamData['message']);
+            break;
+          case "GETDATAPENDING":
+            notifyListeners();
+            streamPending.sink.add(streamData['message']);
+            break;
+          case "GRANTED":
+            notifyListeners();
+            userApproveReturn.sink.add(streamData);
+            break;
+          case "VERIFIKASI":
+            notifyListeners();
+            verifikasiHasLogin.sink.add(streamData);
+            break;
+          case "GETDATACATEGORYAVAILEBLE":
+            notifyListeners();
+            streamCollectionAvaileble.sink.add(streamData['message']);
+            break;
+          case "HASBORROW":
+            notifyListeners();
+            streamUserHasBorrow.sink.add(streamData['message']);
+            break;
+          case "CHECKUSER":
+            checkUserHasBorrows.sink.add(streamData['message']);
+            notifyListeners();
+            print(streamData);
+            break;
+          default:
+            notifyListeners();
+            streamControllerAll.sink.add(streamData);
+            break;
+        }
+      },
+      onDone: () {
+        print('connection close ');
+
+        isConnected = false;
+        reconnet();
+        notifyListeners();
+      },
+      onError: (e) {
+        print("$e  co");
+
+        isConnected = false;
+        reconnet();
+        notifyListeners();
+      },
+    );
+  }
+
   void connect() async {
     try {
       broadCastStream = channel?.stream.asBroadcastStream();
-      broadCastStream?.listen(
-        (message) async {
-          // process code in another thread
-          final streamData = await compute(jsonDecodes, message);
-
-          switch (streamData['endpoint']) {
-            case 'GETDATAALLCATEGORY':
-              notifyListeners();
-              streamCollectionAdmin.sink.add(streamData['message']);
-              break;
-            case "GETDATAALLKEYCATEGORY":
-              notifyListeners();
-              streamKeyResult.sink.add(streamData['message']);
-              break;
-            case "ADDNEWITEM":
-              notifyListeners();
-              addNewData.sink.add(streamData);
-              break;
-            case "DELETECATEGORY":
-              notifyListeners();
-              deleteCollection.sink.add(streamData);
-              break;
-            case "DELETEITEM":
-              notifyListeners();
-              deleteItem.sink.add(streamData);
-              break;
-            case "GETDATABORROW":
-              notifyListeners();
-              streamBorrow.sink.add(streamData['message']);
-              break;
-            case "GETDATAGRANTED":
-              notifyListeners();
-              streamGranted.sink.add(streamData['message']);
-              break;
-            case "GETDATAPENDING":
-              notifyListeners();
-              streamPending.sink.add(streamData['message']);
-              break;
-            case "GRANTED":
-              notifyListeners();
-              userApproveReturn.sink.add(streamData);
-              break;
-            case "VERIFIKASI":
-              notifyListeners();
-              verifikasiHasLogin.sink.add(streamData);
-              break;
-            case "GETDATACATEGORYAVAILEBLE":
-              notifyListeners();
-              stramCollectionAvaileble.sink.add(streamData['message']);
-              break;
-            case "HASBORROW":
-              notifyListeners();
-              streamUserHasBorrow.sink.add(streamData['message']);
-              break;
-            case "CHECKUSER":
-              checkUserHasBorrows.sink.add(streamData['message']);
-              notifyListeners();
-              print(streamData);
-              break;
-            default:
-              notifyListeners();
-              streamControllerAll.sink.add(streamData);
-              break;
-          }
-        },
-        onDone: () {
-          print('connection close ');
-
-          isConnected = false;
-          reconnet();
-          notifyListeners();
-        },
-        onError: (e) {
-          print("$e  co");
-
-          isConnected = false;
-          reconnet();
-          notifyListeners();
-        },
+      await compute(
+        processConnectionServer,
+        broadCastStream,
       );
-
       isConnected = true;
       notifyListeners();
     } catch (e, s) {
@@ -350,44 +359,6 @@ class WebsocketHelper with ChangeNotifier {
     );
   }
 
-  Stream<String> verifikasi() async* {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final getToken = prefs.getString('token');
-
-    try {
-      DateTime now = DateTime.now();
-      DateTime lastRequest = DateTime.parse(
-        prefs.getString('lastRequest') ??
-            now.subtract(Duration(minutes: 10)).toIso8601String(),
-      );
-
-      // debugPrint("$getToken token wsHelper");
-      // debugPrint("${prefs.getString('lastRequest')} exp wsHelper");
-
-      if (now.difference(lastRequest).inMinutes >= 10) {
-        if (getToken != null) {
-          channel?.sink.add(json.encode(
-            {
-              "endpoint": "verifikasi",
-              "data": {
-                "token": getToken,
-              }
-            },
-          ));
-        }
-        prefs.setString('lastRequest', now.toIso8601String());
-      }
-
-      await for (final status in streamControllerAll.stream) {
-        if (status['endpoint'] == "VERIFIKASI") {
-          yield status['status'];
-        }
-      }
-    } catch (e) {
-      debugPrint("$e error in verifikasi");
-    }
-  }
-
   Stream<Map> responseLogin() async* {
     Map data = {};
 
@@ -412,7 +383,7 @@ class WebsocketHelper with ChangeNotifier {
     }
   }
 
-  @Deprecated("this code is not proper ")
+  @Deprecated("this code is not proper so must to change ")
   Stream<BorrowUser> userHasBorrows() async* {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final getToken = prefs.getString('hasBorrow');
@@ -568,7 +539,6 @@ class WebsocketHelper with ChangeNotifier {
       final keyCategory = KeyCategoryList.fromJson(data[i]);
       key.add(keyCategory);
     }
-
     return key;
   }
 }
