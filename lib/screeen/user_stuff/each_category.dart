@@ -90,7 +90,7 @@ class _ScreenCategoryUserState extends State<ScreenCategoryUser> {
       body: Consumer<WebsocketHelper>(
         builder: (contex, wsHelper, child) {
           return StreamBuilder(
-            stream: wsHelper.stramCollectionAvaileble.stream,
+            stream: wsHelper.streamCollectionAvaileble.stream,
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return const Center(
