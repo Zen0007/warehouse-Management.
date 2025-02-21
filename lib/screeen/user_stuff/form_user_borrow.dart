@@ -2,7 +2,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:image_picker_for_web/image_picker_for_web.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:werehouse_inventory/screeen/user_stuff/user_has_borrow.dart';
 import 'package:werehouse_inventory/shered_data_to_root/shared_preferences.dart';
@@ -25,7 +24,7 @@ class _FormForUserState extends State<FormForUser> {
   bool isLoding = false;
   bool obscureText = true;
   Uint8List? image;
-  final ImagePickerPlugin pickerImageFromGalery = ImagePickerPlugin();
+  final pickerImageFromGalery = ImagePicker();
 
   void toggleObscure() {
     setState(() {
@@ -252,8 +251,9 @@ class _FormForUserState extends State<FormForUser> {
   }
 
   void _pickerImageGalery() async {
-    final XFile? pickedImage = await pickerImageFromGalery.getImageFromSource(
+    final XFile? pickedImage = await pickerImageFromGalery.pickImage(
       source: ImageSource.camera,
+      imageQuality: 20,
     );
     if (pickedImage != null) {
       final imagePicker = await pickedImage.readAsBytes();

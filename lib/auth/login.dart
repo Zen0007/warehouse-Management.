@@ -120,12 +120,6 @@ class _LoginState extends State<Login> {
             ),
             onPressed: () {
               Navigator.pop(context);
-              Future.delayed(
-                Duration(seconds: 1),
-                () {
-                  _fromKey.currentState!.reset();
-                },
-              );
             },
             child: Text(
               "Yes",
@@ -464,8 +458,8 @@ class _LoginState extends State<Login> {
               if (!isLoding)
                 Container(
                   margin: EdgeInsets.only(
-                    right: constraints.maxWidth * 0.12,
-                    left: constraints.maxWidth * 0.12,
+                    right: constraints.maxWidth * 0.05,
+                    left: constraints.maxWidth * 0.05,
                   ),
                   child: Consumer<WebsocketHelper>(
                     builder: (contex, wsHelper, child) {

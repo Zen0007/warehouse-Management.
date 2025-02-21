@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:image_picker_for_web/image_picker_for_web.dart';
 import 'package:provider/provider.dart';
 import 'package:werehouse_inventory/configuration/add_data/controler_service_add.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
@@ -16,13 +15,13 @@ class AddItem extends StatefulWidget {
 class _AddItemState extends State<AddItem> {
   final GlobalKey<FormState> _fromKey = GlobalKey<FormState>();
   final textField = FocusNode();
+  final ImagePicker picker = ImagePicker();
   Uint8List? image;
   String name = '';
   String label = '';
   bool isLoding = false;
   bool hasSend = false;
   bool obscureText = true;
-  final ImagePickerPlugin pickerImageFromGalery = ImagePickerPlugin();
   String? valueDropDown;
 
   void toggleObscure() {
@@ -33,14 +32,15 @@ class _AddItemState extends State<AddItem> {
   }
 
   void _pickerImageGalery() async {
-    final XFile? pickedImage = await pickerImageFromGalery.getImageFromSource(
+    final pickedImage = await picker.pickImage(
       source: ImageSource.gallery,
+      imageQuality: 20,
     );
     if (pickedImage != null) {
-      final imagePicker = await pickedImage.readAsBytes();
+      final imageUint8List = await pickedImage.readAsBytes();
       setState(
         () {
-          image = imagePicker;
+          image = imageUint8List;
         },
       );
     } else {
@@ -92,10 +92,6 @@ class _AddItemState extends State<AddItem> {
           isLoding = true;
         },
       );
-      // if (image == null) {
-      //   alertIfImageNull('image must add');
-      //   return;
-      // }
       if (valueDropDown == null) {
         alertIfImageNull('category must add');
         setState(() {

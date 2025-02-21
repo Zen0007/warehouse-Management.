@@ -215,12 +215,10 @@ class _AddItemState extends State<DeleteCategory> {
                         );
                       } else if (snapshot.data!.isEmpty) {
                         return Center(
-                          child: ListTile(
-                            title: Text(
-                              "Daftar category kosong ",
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.onPrimary,
-                              ),
+                          child: Text(
+                            "Daftar category kosong ",
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
                         );
@@ -385,12 +383,10 @@ class _AddItemState extends State<DeleteCategory> {
                       );
                     } else if (snapshot.data!.isEmpty) {
                       return Center(
-                        child: ListTile(
-                          title: Text(
-                            "Daftar category kosong ",
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                            ),
+                        child: Text(
+                          "Daftar category kosong ",
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
                           ),
                         ),
                       );
