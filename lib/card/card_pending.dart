@@ -244,6 +244,15 @@ class CardPending extends StatelessWidget {
                   },
                 },
               );
+              Future.delayed(
+                Duration(seconds: 5),
+                () {
+                  if (!context.mounted) {
+                    return;
+                  }
+                  Navigator.of(context).pop();
+                },
+              );
             },
             child: Text(
               "Yes",
