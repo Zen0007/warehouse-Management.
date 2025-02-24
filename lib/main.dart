@@ -14,8 +14,10 @@ void main() {
             WebSocketChannel.connect(Uri.parse('ws://127.0.0.1:8080/ws')),
           ),
         ),
-        Provider(
-          create: (context) => AuthService(context.read<WebsocketHelper>()),
+        ChangeNotifierProvider(
+          create: (context) => AuthService(
+            context.read<WebsocketHelper>(),
+          ),
         )
       ],
       child: App(),
