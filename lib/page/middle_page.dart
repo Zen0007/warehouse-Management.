@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werehouse_inventory/page/first_screen.dart';
 import 'package:werehouse_inventory/screeen/user_stuff/user_has_borrow.dart';
-import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
+import 'package:werehouse_inventory/shered_data_to_root/auth_service.dart';
 
 class MiddlePage extends StatefulWidget {
   const MiddlePage({super.key});
@@ -14,16 +14,17 @@ class MiddlePage extends StatefulWidget {
 class _MiddlePageState extends State<MiddlePage> {
   @override
   Widget build(BuildContext context) {
-    final secondaryWs = Provider.of<WebsocketHelper>(context, listen: true);
-    secondaryWs.checkUserHasBorrow();
+    final secondaryWs = Provider.of<AuthService>(context, listen: true);
+
     return Scaffold(
       body: StreamBuilder(
-        stream: secondaryWs.checkUserHasBorrows.stream,
+        stream: secondaryWs.userHasBorrow(),
         builder: (context, snapshot) {
           print("${snapshot.hasData} data middle");
-          if (snapshot.hasData) {
+          if (snapshot.data != null) {
             return UserHasBorrows();
           }
+
           return FirstScreen();
         },
       ),

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:werehouse_inventory/data%20type/index.dart';
 import 'package:werehouse_inventory/data type/borrow_user.dart';
@@ -11,7 +10,6 @@ import 'package:werehouse_inventory/data%20type/key_category_list.dart';
 class WebsocketHelper with ChangeNotifier {
   WebsocketHelper(this.channel) {
     connect();
-    grantedForReturnItem();
   }
 
   Stream? broadCastStream;
@@ -272,67 +270,6 @@ class WebsocketHelper with ChangeNotifier {
     notifyListeners();
   }
 
-  void grantedForReturnItem() async {
-    await for (var data in streamControllerAll.stream) {
-      if (data['endpoint'] == "GRANTED") {
-        if (data.containsKey('message')) {
-          final SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.remove('hasBorrow');
-          notifyListeners();
-          return;
-        }
-      }
-    }
-  }
-
-  void checkUserHasBorrow() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final getToken = prefs.getString('hasBorrow');
-    final now = DateTime.now();
-    final lastRequest = DateTime.parse(
-      prefs.getString('RequestUser') ??
-          now.subtract(Duration(seconds: 2)).toIso8601String(),
-    );
-    if (now.difference(lastRequest).inSeconds >= 2) {
-      print("tokenUser $getToken");
-      if (getToken != null) {
-        channel?.sink.add(
-          json.encode(
-            {
-              "endpoint": "checkUserBorrow",
-              "data": {
-                "name": getToken,
-              }
-            },
-          ),
-        );
-      }
-      prefs.setString('RequestUser', now.toIso8601String());
-    }
-  }
-
-// for first request
-  void userHasBorrowsOnce() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final getToken = prefs.getString('hasBorrow');
-    print("$getToken user name");
-
-    channel?.sink.add(json.encode(
-      {
-        "endpoint": "hasBorrowOnce",
-        "data": {
-          "name": getToken ?? '',
-        }
-      },
-    ));
-  }
-
-  void testDeleteUser() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove('hasBorrow');
-    return;
-  }
-
   Future<Map> message() async {
     await Future.delayed(Duration(seconds: 10));
     return {"message": "respone"};
@@ -341,21 +278,6 @@ class WebsocketHelper with ChangeNotifier {
   void sendMessage(Map<String, dynamic> message) {
     channel?.sink.add(
       json.encode(message),
-    );
-  }
-
-  void sendRequestReturnItem() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final getToken = prefs.getString('hasBorrow');
-    channel?.sink.add(
-      json.encode(
-        {
-          'endpoint': "waitPermision",
-          'data': {
-            "name": getToken ?? "",
-          }
-        },
-      ),
     );
   }
 
@@ -384,11 +306,7 @@ class WebsocketHelper with ChangeNotifier {
   }
 
   @Deprecated("this code is not proper so must to change ")
-  Stream<BorrowUser> userHasBorrows() async* {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final getToken = prefs.getString('hasBorrow');
-    print("$getToken user name");
-
+  Stream<BorrowUser> userHasBorrowss() async* {
     try {
       await for (final status in streamControllerAll.stream) {
         if (status['endpoint'] == "HASBORROW") {
@@ -409,19 +327,6 @@ class WebsocketHelper with ChangeNotifier {
       print(e);
       debugPrint("$s strackTrace");
     }
-  }
-
-  void sendRequestUserHasBorrow() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final getToken = prefs.getString('hasBorrow');
-    channel?.sink.add(json.encode(
-      {
-        "endpoint": "hasBorrow",
-        "data": {
-          "name": getToken ?? '',
-        }
-      },
-    ));
   }
 
   BorrowUser? processUserHasBorrow(Map status) {
