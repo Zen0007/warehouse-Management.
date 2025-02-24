@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:werehouse_inventory/data%20type/borrow_user.dart';
-import 'package:werehouse_inventory/page/first_screen.dart';
 import 'package:werehouse_inventory/screeen/user_stuff/each_category.dart';
 import 'package:werehouse_inventory/shered_data_to_root/auth_service.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
