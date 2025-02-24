@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:werehouse_inventory/configuration/add_data/controler_service_add.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
@@ -13,6 +13,7 @@ class AddNewAdmin extends StatefulWidget {
 
 class _AddNewAdminState extends State<AddNewAdmin> {
   final GlobalKey<FormState> _fromKey = GlobalKey<FormState>();
+  final storage = FlutterSecureStorage();
   final textField = FocusNode();
   String name = '';
   bool isLoding = false;
@@ -28,9 +29,9 @@ class _AddNewAdminState extends State<AddNewAdmin> {
 
   void sumbit(WebsocketHelper wsHelper) async {
     final validate = _fromKey.currentState!.validate();
-    final prefs = await SharedPreferences.getInstance();
+
     // ignore: unused_local_variable
-    final nameAdmin = prefs.getString('token');
+    final nameAdmin = await storage.read(key: 'token');
 
     if (!validate) {
       await Future.delayed(
@@ -307,7 +308,7 @@ class _AddNewAdminState extends State<AddNewAdmin> {
               bottom: 20,
             ),
             child: Consumer<WebsocketHelper>(
-              builder: (contex, wsHelper, child) {
+              builder: (contex, wsHelper, _) {
                 return ElevatedButton(
                   onPressed: () => sumbit(wsHelper),
                   style: ElevatedButton.styleFrom(
@@ -449,7 +450,7 @@ class _AddNewAdminState extends State<AddNewAdmin> {
               bottom: 20,
             ),
             child: Consumer<WebsocketHelper>(
-              builder: (contex, wsHelper, child) {
+              builder: (contex, wsHelper, _) {
                 return ElevatedButton(
                   onPressed: () => sumbit(wsHelper),
                   style: ElevatedButton.styleFrom(

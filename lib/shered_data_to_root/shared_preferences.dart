@@ -1,29 +1,22 @@
 import 'dart:convert';
-
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class StoredUserChoice {
+  final storage = FlutterSecureStorage();
+
   Future<void> saveListToSharedPreferences(
       List<Map<String, dynamic>> choise) async {
-    final SharedPreferences pref = await SharedPreferences.getInstance();
     String jsonString = json.encode(choise);
-    await pref.setString("choice", jsonString);
+    await storage.write(key: "choice", value: jsonString);
   }
 
   Future<List<Map<String, dynamic>>> getListFromSharedPreferences() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? jsonString = prefs.getString("choice");
+    String? jsonString = await storage.read(key: "choice");
     if (jsonString != null) {
       final List jsonList = json.decode(jsonString);
       return jsonList.map((item) => item as Map<String, dynamic>).toList();
     }
     return [];
-  }
-
-  Future<void> delete() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    // ignore: unused_local_variable
-    final remove = await prefs.remove("choice");
   }
 
   Future<void> addNewMapToSharedPreferences(

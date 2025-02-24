@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:werehouse_inventory/page/home_page.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -75,10 +75,10 @@ class _LoginState extends State<Login> {
           debugPrint("$warning waring");
           return;
         } else if (data.containsKey('message')) {
-          final prefs = await SharedPreferences.getInstance();
+          final storage = FlutterSecureStorage();
           final token = data['message'];
-          await prefs.setString('token', token);
-          await prefs.setString("adminName", data['adminName']);
+          await storage.write(key: 'token', value: token);
+          await storage.write(key: "adminName", value: data['adminName']);
 
           if (!context.mounted) return;
           Navigator.push(
@@ -314,7 +314,7 @@ class _LoginState extends State<Login> {
                     left: constraints.maxWidth * 0.05,
                   ),
                   child: Consumer<WebsocketHelper>(
-                    builder: (contex, wsHelper, child) {
+                    builder: (contex, wsHelper, _) {
                       return ElevatedButton(
                         onPressed: () => sumbit(context, wsHelper),
                         style: ElevatedButton.styleFrom(
@@ -437,8 +437,8 @@ class _LoginState extends State<Login> {
               if (isLoding)
                 Container(
                   margin: EdgeInsets.only(
-                    right: constraints.maxWidth * 0.05,
-                    left: constraints.maxWidth * 0.05,
+                    right: constraints.maxWidth * 0.12,
+                    left: constraints.maxWidth * 0.12,
                   ),
                   child: ElevatedButton(
                     onPressed: () {},
@@ -458,11 +458,11 @@ class _LoginState extends State<Login> {
               if (!isLoding)
                 Container(
                   margin: EdgeInsets.only(
-                    right: constraints.maxWidth * 0.05,
-                    left: constraints.maxWidth * 0.05,
+                    right: constraints.maxWidth * 0.12,
+                    left: constraints.maxWidth * 0.12,
                   ),
                   child: Consumer<WebsocketHelper>(
-                    builder: (contex, wsHelper, child) {
+                    builder: (contex, wsHelper, _) {
                       return ElevatedButton(
                         onPressed: () => sumbit(context, wsHelper),
                         style: ElevatedButton.styleFrom(

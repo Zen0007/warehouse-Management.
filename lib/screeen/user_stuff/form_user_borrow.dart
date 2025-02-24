@@ -1,8 +1,9 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:werehouse_inventory/screeen/user_stuff/user_has_borrow.dart';
 import 'package:werehouse_inventory/shered_data_to_root/shared_preferences.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
@@ -25,6 +26,7 @@ class _FormForUserState extends State<FormForUser> {
   bool obscureText = true;
   Uint8List? image;
   final pickerImageFromGalery = ImagePicker();
+  final storage = FlutterSecureStorage();
 
   void toggleObscure() {
     setState(() {
@@ -97,7 +99,7 @@ class _FormForUserState extends State<FormForUser> {
             "name": name,
             "class": kelas,
             "nisn": nisn,
-            "teacher": nameGuru,
+            "nameTeacher": nameGuru,
             "time": "${DateTime.now()}",
             "imageSelfie": image,
             "items": listChoiceUser,
@@ -125,19 +127,22 @@ class _FormForUserState extends State<FormForUser> {
             );
             return;
           } else if (data.containsKey('message')) {
-            wsHelper.sendMessage(
-              {
-                "endpoint": "checkUserBorrow",
-                "data": {
+            await storage.write(
+              key: 'dataItemBorrowUser',
+              value: json.encode(
+                {
                   "name": name,
-                }
-              },
-            ); // get data user
-
-            final prefs = await SharedPreferences.getInstance();
-
-            prefs.setString('hasBorrow', name);
-            prefs.remove("choice");
+                  "class": kelas,
+                  "nisn": nisn,
+                  "nameTeacher": nameGuru,
+                  "time": "${DateTime.now()}",
+                  "imageSelfie": image,
+                  "items": listChoiceUser,
+                },
+              ),
+            );
+            await storage.write(key: "nameUserHasBorrow", value: name);
+            await storage.delete(key: "choice");
 
             Future.delayed(
               Duration(seconds: 1),
@@ -195,7 +200,6 @@ class _FormForUserState extends State<FormForUser> {
                   },
                 ),
               );
-              wsHelper.userHasBorrowsOnce(); //send request to database once
             },
             child: Text(
               "Yes",
@@ -448,7 +452,7 @@ class _FormForUserState extends State<FormForUser> {
                 ),
                 TextFormField(
                   decoration: InputDecoration(
-                    hintText: " nisn",
+                    hintText: " nisn (Opsional)",
                     counterStyle: const TextStyle(
                       backgroundColor: Colors.black,
                     ),
@@ -560,7 +564,7 @@ class _FormForUserState extends State<FormForUser> {
                     top: constraints.maxWidth * 0.08,
                     bottom: constraints.maxWidth * 0.1),
                 child: Consumer<WebsocketHelper>(
-                  builder: (contex, wsHelper, child) {
+                  builder: (contex, wsHelper, _) {
                     return ElevatedButton(
                       onPressed: () {
                         sumbit(context, wsHelper);
@@ -847,7 +851,7 @@ class _FormForUserState extends State<FormForUser> {
                   bottom: constraints.maxWidth * 0.05,
                 ),
                 child: Consumer<WebsocketHelper>(
-                  builder: (contex, wsHelper, child) {
+                  builder: (contex, wsHelper, _) {
                     return ElevatedButton(
                       onPressed: () {
                         sumbit(context, wsHelper);
