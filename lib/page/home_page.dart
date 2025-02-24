@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:werehouse_inventory/configuration/add_data/controler_service_add.dart';
-import 'package:werehouse_inventory/configuration/delete/controler_service_deleted.dart';
 import 'package:werehouse_inventory/page/first_screen.dart';
 import 'package:werehouse_inventory/screeen/admin_stuff/borrow.dart';
 import 'package:werehouse_inventory/screeen/admin_stuff/grantend_user.dart';
@@ -11,6 +9,8 @@ import 'package:werehouse_inventory/screeen/admin_stuff/category_admin.dart';
 import 'package:werehouse_inventory/screeen/admin_stuff/pending_user.dart';
 import 'package:werehouse_inventory/shered_data_to_root/auth_service.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
+import 'package:werehouse_inventory/configuration/add_data/controler_service_add.dart';
+import 'package:werehouse_inventory/configuration/delete/controler_service_deleted.dart';
 
 class HomePage extends StatelessWidget {
   HomePage({
@@ -18,6 +18,7 @@ class HomePage extends StatelessWidget {
   });
 
   final GlobalKey<ScaffoldState> drawer = GlobalKey<ScaffoldState>();
+  final storage = FlutterSecureStorage();
 
   void selectCategory(BuildContext context, String title) {
     Navigator.of(context).push(
@@ -29,16 +30,8 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Future<String?> nameAdmin() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? name = prefs.getString("adminName");
-
-    return name;
-  }
-
   Future<dynamic> detailAdmin(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? name = prefs.getString("adminName");
+    final String? name = await storage.read(key: "adminName");
 
     if (!context.mounted) {
       return;
@@ -159,7 +152,7 @@ class HomePage extends StatelessWidget {
         child: Stack(
           children: [
             Consumer<WebsocketHelper>(
-              builder: (contex, wsHelper, child) {
+              builder: (contex, wsHelper, _) {
                 return ListView(
                   children: [
                     DrawerHeader(
@@ -400,16 +393,17 @@ class HomePage extends StatelessWidget {
                                   Theme.of(context).colorScheme.secondary,
                             ),
                             onPressed: () async {
-                              Navigator.push(
+                              Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => FirstScreen(),
                                 ),
+                                (route) => false,
                               );
-                              final prefs =
-                                  await SharedPreferences.getInstance();
-                              prefs.remove("token");
-                              debugPrint('${prefs.getString('token')}  token');
+
+                              await storage.delete(key: "token");
+                              debugPrint(
+                                  '${await storage.read(key: 'token')}  token');
                             },
                             child: Text(
                               'logout',

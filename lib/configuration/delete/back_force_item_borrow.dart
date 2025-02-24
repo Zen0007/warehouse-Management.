@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:werehouse_inventory/configuration/delete/controler_service_deleted.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
@@ -14,6 +14,7 @@ class DeleteUserGranted extends StatefulWidget {
 class _AddNewAdminState extends State<DeleteUserGranted> {
   final GlobalKey<FormState> _fromKey = GlobalKey<FormState>();
   final textField = FocusNode();
+
   String name = '';
   bool isLoding = false;
 
@@ -28,9 +29,6 @@ class _AddNewAdminState extends State<DeleteUserGranted> {
 
   void sumbit(BuildContext context, WebsocketHelper wsHelper) async {
     final validate = _fromKey.currentState!.validate();
-    final prefs = await SharedPreferences.getInstance();
-    // ignore: unused_local_variable
-    final nameAdmin = prefs.getString('token');
 
     if (!validate) {
       await Future.delayed(
@@ -257,7 +255,7 @@ class _AddNewAdminState extends State<DeleteUserGranted> {
               bottom: 20,
             ),
             child: Consumer<WebsocketHelper>(
-              builder: (contex, wsHelper, child) {
+              builder: (contex, wsHelper, _) {
                 return ElevatedButton(
                   onPressed: () => sumbit(context, wsHelper),
                   style: ElevatedButton.styleFrom(
@@ -353,7 +351,7 @@ class _AddNewAdminState extends State<DeleteUserGranted> {
               bottom: 20,
             ),
             child: Consumer<WebsocketHelper>(
-              builder: (contex, wsHelper, child) {
+              builder: (contex, wsHelper, _) {
                 return ElevatedButton(
                   onPressed: () => sumbit(context, wsHelper),
                   style: ElevatedButton.styleFrom(

@@ -32,9 +32,7 @@ class _AppState extends State<App> {
                check if token user is valide else is token invalide and nothing return
               */
           print("has data ${snapshot.hasData}");
-          if (snapshot.data == null) {
-            return MiddlePage();
-          }
+
           if (snapshot.data != null) {
             return HomePage();
           }

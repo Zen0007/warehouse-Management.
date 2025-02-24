@@ -177,7 +177,7 @@ class CardGranted extends StatelessWidget {
             right: 0.5,
             top: 0.5,
             child: Consumer<WebsocketHelper>(
-              builder: (context, wsHelper, child) {
+              builder: (context, wsHelper, _) {
                 return InkWell(
                   child: Icon(
                     Icons.remove_circle,

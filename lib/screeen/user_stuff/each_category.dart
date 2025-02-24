@@ -1,8 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werehouse_inventory/card/card_item_user.dart';
-import 'package:werehouse_inventory/data%20type/index.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class ScreenCategoryUser extends StatefulWidget {
@@ -14,57 +12,6 @@ class ScreenCategoryUser extends StatefulWidget {
 }
 
 class _ScreenCategoryUserState extends State<ScreenCategoryUser> {
-  final index = [
-    Index(
-      name: "mikrotik",
-      status: "available",
-      label: "L-093",
-      image: Uint8List.fromList([]),
-      category: 'mikrotik',
-      index: "1",
-    ),
-    Index(
-      name: "mikrotik",
-      status: "available",
-      label: "L-093",
-      image: Uint8List.fromList([]),
-      category: 'mikrotik',
-      index: "1",
-    ),
-    Index(
-      name: "mikrotik",
-      status: "available",
-      label: "L-093",
-      image: Uint8List.fromList([]),
-      category: 'mikrotik',
-      index: "1",
-    ),
-    Index(
-      name: "mikrotik",
-      status: "available",
-      label: "L-093",
-      image: Uint8List.fromList([]),
-      category: 'mikrotik',
-      index: "1",
-    ),
-    Index(
-      name: "mikrotik",
-      status: "available",
-      label: "L-093",
-      image: Uint8List.fromList([]),
-      category: 'mikrotik',
-      index: "1",
-    ),
-    Index(
-      name: "mikrotik",
-      status: "available",
-      label: "L-093",
-      image: Uint8List.fromList([]),
-      category: 'mikrotik',
-      index: "1",
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final frequentRequest = Provider.of<WebsocketHelper>(context, listen: true);
@@ -88,7 +35,7 @@ class _ScreenCategoryUserState extends State<ScreenCategoryUser> {
       ),
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Consumer<WebsocketHelper>(
-        builder: (contex, wsHelper, child) {
+        builder: (contex, wsHelper, _) {
           return StreamBuilder(
             stream: wsHelper.streamCollectionAvaileble.stream,
             builder: (context, snapshot) {

@@ -224,7 +224,7 @@ class CardItemUser extends StatelessWidget {
             right: 5,
             bottom: 10,
             child: Consumer<WebsocketHelper>(
-              builder: (context, wsHelper, child) {
+              builder: (context, wsHelper, _) {
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [

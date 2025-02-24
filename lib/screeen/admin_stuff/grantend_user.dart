@@ -36,7 +36,7 @@ class _GrantendUserState extends State<GrantendUser> {
       ),
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Consumer<WebsocketHelper>(
-        builder: (contex, wsHelper, child) {
+        builder: (contex, wsHelper, _) {
           return StreamBuilder(
             stream: wsHelper.streamGranted.stream,
             builder: (context, snapshot) {

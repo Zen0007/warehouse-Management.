@@ -205,7 +205,7 @@ class _AddItemState extends State<DeleteCategory> {
           child: FormField(
             builder: (FormFieldState<String> state) {
               return Consumer<WebsocketHelper>(
-                builder: (context, wsHelper, child) {
+                builder: (context, wsHelper, _) {
                   return StreamBuilder(
                     stream: wsHelper.streamKeyResult.stream,
                     builder: (context, snapshot) {
@@ -334,8 +334,7 @@ class _AddItemState extends State<DeleteCategory> {
               top: constraints.maxWidth * 0.18,
               bottom: 20,
             ),
-            child:
-                Consumer<WebsocketHelper>(builder: (context, wsHelper, child) {
+            child: Consumer<WebsocketHelper>(builder: (context, wsHelper, _) {
               return ElevatedButton(
                 onPressed: () {
                   // for summbit ------------------------------------------------
@@ -372,7 +371,7 @@ class _AddItemState extends State<DeleteCategory> {
           ),
           child: FormField(builder: (FormFieldState<String> state) {
             return Consumer<WebsocketHelper>(
-              builder: (context, wsHelper, child) {
+              builder: (context, wsHelper, _) {
                 return StreamBuilder(
                   stream: wsHelper.streamKeyResult.stream,
                   builder: (context, snapshot) {
@@ -502,7 +501,7 @@ class _AddItemState extends State<DeleteCategory> {
               bottom: 20,
             ),
             child: Consumer<WebsocketHelper>(
-              builder: (context, wsHelper, child) {
+              builder: (context, wsHelper, _) {
                 return ElevatedButton(
                   onPressed: () {
                     // for summbit ------------------------------------------------

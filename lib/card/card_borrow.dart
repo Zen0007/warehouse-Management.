@@ -197,7 +197,7 @@ class CardBorrow extends StatelessWidget {
             right: 1.5,
             top: 0.5,
             child: Consumer<WebsocketHelper>(
-              builder: (context, wsHelper, child) {
+              builder: (context, wsHelper, _) {
                 return InkWell(
                   child: Icon(
                     Icons.backup,

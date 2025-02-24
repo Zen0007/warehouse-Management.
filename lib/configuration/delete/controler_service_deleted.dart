@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werehouse_inventory/configuration/delete/delete_category.dart';
-import 'package:werehouse_inventory/configuration/delete/back_force_itemBorrow.dart';
+import 'package:werehouse_inventory/configuration/delete/back_force_item_borrow.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class ControllerServiceDeleted extends StatelessWidget {
@@ -30,7 +30,7 @@ class ControllerServiceDeleted extends StatelessWidget {
       body: LayoutBuilder(
         builder: (context, constraints) {
           return Consumer<WebsocketHelper>(
-            builder: (context, wsHelper, child) {
+            builder: (context, wsHelper, _) {
               print("width screen ${constraints.maxWidth}");
               return rowListController(context, constraints, wsHelper);
             },

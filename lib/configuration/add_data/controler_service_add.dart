@@ -34,7 +34,7 @@ class ControllerService extends StatelessWidget {
         body: LayoutBuilder(
           builder: (context, constraints) {
             return Consumer<WebsocketHelper>(
-              builder: (context, wsHelper, child) {
+              builder: (context, wsHelper, _) {
                 print("width screen ${constraints.maxWidth}");
                 return rowListController(context, constraints, wsHelper);
               },

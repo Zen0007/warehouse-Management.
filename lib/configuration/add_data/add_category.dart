@@ -253,7 +253,7 @@ class _AddCategory extends State<AddCategory> {
               bottom: 20,
             ),
             child: Consumer<WebsocketHelper>(
-              builder: (contex, wsHelper, child) {
+              builder: (contex, wsHelper, _) {
                 return ElevatedButton(
                   onPressed: () => sumbit(wsHelper),
                   style: ElevatedButton.styleFrom(
@@ -348,7 +348,7 @@ class _AddCategory extends State<AddCategory> {
               bottom: 20,
             ),
             child: Consumer<WebsocketHelper>(
-              builder: (contex, wsHelper, child) {
+              builder: (contex, wsHelper, _) {
                 return ElevatedButton(
                   onPressed: () => sumbit(wsHelper),
                   style: ElevatedButton.styleFrom(

@@ -36,7 +36,7 @@ class _CategoryAdminState extends State<CategoryAdmin> {
       ),
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Consumer<WebsocketHelper>(
-        builder: (contex, wsHelper, child) {
+        builder: (contex, wsHelper, _) {
           return StreamBuilder(
             stream: wsHelper.streamCollectionAdmin.stream,
             builder: (context, snapshot) {

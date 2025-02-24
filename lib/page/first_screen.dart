@@ -80,7 +80,7 @@ class _MiddleScreenState extends State<FirstScreen> {
                     must add consumer so if user access availeble data so data automatic request to ws               
                 */
                 Consumer<WebsocketHelper>(
-                  builder: (contex, wsHelper, child) {
+                  builder: (contex, wsHelper, _) {
                     return ListTile(
                       leading: Icon(
                         color: Theme.of(context).colorScheme.onPrimary,

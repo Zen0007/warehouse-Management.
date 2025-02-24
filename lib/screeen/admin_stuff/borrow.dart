@@ -37,7 +37,7 @@ class _BorrowUserPageState extends State<BorrowUserPage> {
       ),
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Consumer<WebsocketHelper>(
-        builder: (contex, wsHelper, child) {
+        builder: (contex, wsHelper, _) {
           return StreamBuilder(
             stream: wsHelper.streamBorrow.stream,
             builder: (context, snapshot) {
