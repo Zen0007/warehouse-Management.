@@ -14,9 +14,6 @@ class GrantendUser extends StatefulWidget {
 class _GrantendUserState extends State<GrantendUser> {
   @override
   Widget build(BuildContext context) {
-    final secondaryWs = Provider.of<WebsocketHelper>(context, listen: true);
-    secondaryWs.getDataGranted();
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -59,7 +56,6 @@ class _GrantendUserState extends State<GrantendUser> {
                     wsHelper.processGranted(snapshot.data!);
                 return LayoutBuilder(
                   builder: (context, constraints) {
-                    print("${constraints.maxWidth} granted");
                     int count;
                     double mainAxisExtent;
                     debugPrint("${constraints.maxWidth} size");

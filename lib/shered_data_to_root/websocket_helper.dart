@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:werehouse_inventory/data%20type/index.dart';
 import 'package:werehouse_inventory/data type/borrow_user.dart';
@@ -16,6 +17,7 @@ class WebsocketHelper with ChangeNotifier {
   Timer? _reconnectTimer;
   WebSocketChannel? channel;
   bool isConnected = false;
+  final storage = FlutterSecureStorage();
 
   final Duration _reconnectDelay = Duration(seconds: 5);
   final streamControllerAll = StreamController<Map>.broadcast();
@@ -25,7 +27,6 @@ class WebsocketHelper with ChangeNotifier {
   final streamBorrow = StreamController<List>.broadcast();
   final streamPending = StreamController<List>.broadcast();
   final streamGranted = StreamController<List>.broadcast();
-  final streamUserHasBorrow = StreamController<Map>.broadcast();
 
   final addNewData = StreamController<Map>.broadcast();
   final deleteCollection = StreamController<Map>.broadcast();
@@ -44,7 +45,6 @@ class WebsocketHelper with ChangeNotifier {
     streamBorrow.close();
     streamPending.close();
     streamGranted.close();
-    streamUserHasBorrow.close();
 
     addNewData.close();
     deleteCollection.close();
@@ -153,13 +153,20 @@ class WebsocketHelper with ChangeNotifier {
             streamCollectionAvaileble.sink.add(streamData['message']);
             break;
           case "HASBORROW":
+            final String? nameUser = await storage.read(
+              key: "nameUserHasBorrow",
+            );
+            if (streamData['message'].containsKey(nameUser)) {
+              storage.write(
+                key: 'dataItemBorrowUser',
+                value: streamData['message'][nameUser],
+              );
+            }
             notifyListeners();
-            streamUserHasBorrow.sink.add(streamData['message']);
             break;
           case "CHECKUSER":
             checkUserHasBorrows.sink.add(streamData['message']);
             notifyListeners();
-            print(streamData);
             break;
           default:
             notifyListeners();
@@ -187,6 +194,7 @@ class WebsocketHelper with ChangeNotifier {
   void connect() async {
     try {
       broadCastStream = channel?.stream.asBroadcastStream();
+
       await compute(
         processConnectionServer,
         broadCastStream,
@@ -203,20 +211,10 @@ class WebsocketHelper with ChangeNotifier {
     }
   }
 
-  //sent Frequent Request
-  void getDataBorrow() {
-    channel?.sink.add(json.encode({"endpoint": "getDataBorrow"}));
-  }
-
   //sent once Request
   void getDataBorrowOnce() {
     channel?.sink.add(json.encode({"endpoint": "getDataBorrowOnce"}));
     notifyListeners();
-  }
-
-  //sent Frequent Request
-  void getDataCategoryUser() {
-    channel?.sink.add(json.encode({"endpoint": "getDataCollectionAvaileble"}));
   }
 
   //sent once Request
@@ -226,20 +224,10 @@ class WebsocketHelper with ChangeNotifier {
     notifyListeners();
   }
 
-  //sent Frequent Request
-  void getDataAllCollection() {
-    channel?.sink.add(json.encode({"endpoint": "getDataAllCollection"}));
-  }
-
   //sent once Request
   void getDataAllCollectionOnce() {
     channel?.sink.add(json.encode({"endpoint": "getDataAllCollectionOnce"}));
     notifyListeners();
-  }
-
-  //sent Frequent Request
-  void getDataPending() {
-    channel?.sink.add(json.encode({"endpoint": "getDataPending"}));
   }
 
   //sent once Request
@@ -248,20 +236,10 @@ class WebsocketHelper with ChangeNotifier {
     notifyListeners();
   }
 
-  //sent Frequent Request
-  void getAllKeyCategory() {
-    channel?.sink.add(json.encode({"endpoint": "getAllKeyCategory"}));
-  }
-
   //sent once Request
   void getAllKeyCategoryOnce() {
     channel?.sink.add(json.encode({"endpoint": "getAllKeyCategoryOnce"}));
     notifyListeners();
-  }
-
-  //sent Frequent Request
-  void getDataGranted() {
-    channel?.sink.add(json.encode({"endpoint": "getDataGranted"}));
   }
 
   //sent once Request

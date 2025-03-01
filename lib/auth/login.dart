@@ -55,8 +55,8 @@ class _LoginState extends State<Login> {
         {
           "endpoint": "login",
           "data": {
-            "name": name,
-            "password": password,
+            "name": name.replaceAll(' ', ''),
+            "password": password.replaceAll(' ', ''),
           },
         },
       );

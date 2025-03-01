@@ -9,10 +9,12 @@ class CardItemUser extends StatelessWidget {
     super.key,
     required this.data,
     required this.imageSize,
+    required this.size,
   });
 
   final Index data;
   final double imageSize;
+  final BoxConstraints size;
 
   Future<void> store(
       String category, String index, String name, String label) async {
@@ -78,7 +80,7 @@ class CardItemUser extends StatelessWidget {
             context,
             true,
             status['message'],
-            Theme.of(context).colorScheme.onSecondary,
+            Theme.of(context).colorScheme.surface,
           );
 
           return;
@@ -103,121 +105,77 @@ class CardItemUser extends StatelessWidget {
       child: Stack(
         children: [
           Column(
+            spacing: 10,
             children: [
               if (data.image.isNotEmpty)
-                Container(
-                  margin: const EdgeInsets.only(
-                    top: 10,
-                    bottom: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    boxShadow: const [
-                      BoxShadow(
-                        // color: Theme.of(context).colorScheme.primary,
-                        blurRadius: 10,
-                        offset: Offset(0, 10),
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(
+                      top: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      boxShadow: const [
+                        BoxShadow(
+                          // color: Theme.of(context).colorScheme.primary,
+                          blurRadius: 10,
+                          offset: Offset(0, 10),
+                        ),
+                      ],
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.memory(
+                        data.image,
+                        height: imageSize * 0.65,
+                        width: imageSize * 0.8,
+                        fit: BoxFit.cover,
                       ),
-                    ],
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.memory(
-                      data.image,
-                      height: imageSize * 0.65,
-                      width: imageSize * 0.8,
-                      fit: BoxFit.cover,
                     ),
                   ),
                 )
               else
-                Container(
-                  height: imageSize * 0.65,
-                  width: imageSize * 0.8,
-                  margin: const EdgeInsets.only(
-                    top: 10,
-                    bottom: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.image_not_supported_outlined,
-                      size: 50,
+                Center(
+                  child: Container(
+                    height: imageSize * 0.65,
+                    width: imageSize * 0.8,
+                    margin: const EdgeInsets.only(top: 10),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.image_not_supported_outlined,
+                        size: 50,
+                      ),
                     ),
                   ),
                 ),
               const SizedBox(
                 height: 10,
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Text(
-                    "name :",
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(
-                    width: 4,
-                  ),
-                  Text(
-                    data.name,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  )
-                ],
+              Text(
+                data.name,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Text(
-                    "label   :",
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(
-                    width: 4,
-                  ),
-                  Text(
-                    data.label,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  )
-                ],
+              Text(
+                data.label,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Text(
-                    "status :",
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(
-                    width: 4,
-                  ),
-                  Text(
-                    data.status,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  )
-                ],
-              ),
+              Text(
+                data.status,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              )
             ],
           ),
           Positioned(

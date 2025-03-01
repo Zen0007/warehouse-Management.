@@ -111,152 +111,157 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context, listen: true);
-    authService.getNewStatusUser();
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      body: Stack(
-        children: [
-          StreamBuilder(
-            stream: authService.dataLocalUserHasBorrow(),
-            builder: (context, snapshot) {
-              if (snapshot.data != null) {
-                print("snapsot ${snapshot.data}");
-                return LayoutBuilder(
-                  builder: (context, constraints) {
-                    int count;
+      body: StreamBuilder(
+        stream: authService.dataLocalUserHasBorrow(),
+        builder: (context, snapshot) {
+          if (snapshot.data != null) {
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                int count;
 
-                    debugPrint("${constraints.maxWidth} WIdth");
+                debugPrint("${constraints.maxWidth} WIdth");
 
-                    if (constraints.maxWidth < 480) {
-                      count = 2;
-                    } else if (constraints.maxWidth < 700) {
-                      count = 3;
-                    } else if (constraints.maxWidth < 900) {
-                      count = 4;
-                    } else if (constraints.maxWidth < 1000) {
-                      count = 5;
-                    } else {
-                      count = 6;
-                    }
+                if (constraints.maxWidth < 480) {
+                  count = 2;
+                } else if (constraints.maxWidth < 700) {
+                  count = 3;
+                } else if (constraints.maxWidth < 900) {
+                  count = 4;
+                } else if (constraints.maxWidth < 1000) {
+                  count = 5;
+                } else {
+                  count = 6;
+                }
 
-                    double sizeImage = constraints.maxWidth / count;
+                double sizeImage = constraints.maxWidth / count;
 
-                    return Column(
-                      children: [
-                        SizedBox(
-                          height: constraints.maxWidth * 0.05,
-                        ),
-                        Center(
-                          child: Container(
-                            margin: EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              boxShadow: const [
-                                BoxShadow(
-                                  blurRadius: 10,
-                                  offset: Offset(0, 10),
-                                ),
-                              ],
-                              borderRadius: BorderRadius.circular(25),
+                return ListView(
+                  children: [
+                    Center(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(vertical: 30),
+                        decoration: BoxDecoration(
+                          boxShadow: const [
+                            BoxShadow(
+                              blurRadius: 10,
+                              offset: Offset(0, 10),
                             ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(25),
-                              child: Image.memory(
-                                snapshot.data!.imageUser,
-                                height: sizeImage * 0.76,
-                                width: sizeImage * 0.86,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
+                          ],
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(25),
+                          child: Image.memory(
+                            snapshot.data!.imageUser,
+                            height: sizeImage * 0.76,
+                            width: sizeImage * 0.86,
+                            fit: BoxFit.cover,
                           ),
                         ),
-                        SizedBox(
-                          height: constraints.maxWidth * 0.02,
-                        ),
-                        Padding(
-                          padding: EdgeInsets.only(
-                              left: constraints.maxWidth * 0.01),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              nameTitle(
-                                constraints,
-                                context,
-                                snapshot.data!.nameUser!,
-                              ),
-                              nameTitle(
-                                constraints,
-                                context,
-                                snapshot.data!.classUser!,
-                              ),
-                              nameTitle(
-                                constraints,
-                                context,
-                                snapshot.data!.nisn!,
-                              ),
-                              nameTitle(
-                                constraints,
-                                context,
-                                snapshot.data!.status ?? "-",
-                              ),
-                              nameTitle(
-                                constraints,
-                                context,
-                                snapshot.data!.nameTeacher!,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          margin: EdgeInsets.only(top: 20, bottom: 10),
-                          padding: EdgeInsets.only(left: 5, right: 5),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.secondary,
-                            borderRadius: BorderRadius.circular(5.5),
-                          ),
-                          child: TextButton(
-                            onPressed: () =>
-                                detailUser(context, snapshot.data!),
-                            child: Text(
-                              "list data borrow use",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              } else {
-                return Center(
-                  child: Text(
-                    'is not found ${snapshot.error}',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onPrimary,
+                      ),
                     ),
-                  ),
-                );
-              }
-            },
-          ),
-          Positioned(
-            bottom: 30,
-            right: 30,
-            child: Consumer<WebsocketHelper>(
-              builder: (context, wsHelper, child) {
-                return MaterialButton(
-                  color: Colors.blue,
-                  onPressed: () {
-                    // wsHelper.testDeleteUser();
-                  },
-                  child: Text("kembalikan"),
+                    Padding(
+                      padding:
+                          EdgeInsets.only(left: constraints.maxWidth * 0.01),
+                      child: Column(
+                        spacing: 10,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          nameTitle(
+                            constraints,
+                            context,
+                            snapshot.data!.nameUser!,
+                          ),
+                          nameTitle(
+                            constraints,
+                            context,
+                            snapshot.data!.classUser!,
+                          ),
+                          nameTitle(
+                            constraints,
+                            context,
+                            snapshot.data!.nisn!,
+                          ),
+                          nameTitle(
+                            constraints,
+                            context,
+                            snapshot.data!.status ?? "----",
+                          ),
+                          nameTitle(
+                            constraints,
+                            context,
+                            snapshot.data!.nameTeacher!,
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .secondary
+                                  .withGreen(30),
+                              borderRadius: BorderRadius.circular(5.5),
+                            ),
+                            child: TextButton(
+                              onPressed: () =>
+                                  detailUser(context, snapshot.data!),
+                              child: Text(
+                                "Daftar Item Dipinjam",
+                                style: TextStyle(
+                                  color:
+                                      Theme.of(context).colorScheme.onSecondary,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.only(top: 30, bottom: 50),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .secondary
+                                  .withGreen(160),
+                              borderRadius: BorderRadius.circular(5.5),
+                            ),
+                            child: TextButton(
+                              onPressed: () => authService.wsHelper.sendMessage(
+                                {
+                                  "endpoint": "waitPermision",
+                                  "data": {
+                                    "name": "${snapshot.data!.nameUser}",
+                                  },
+                                },
+                              ),
+                              child: Text(
+                                "kembalikan item",
+                                style: TextStyle(
+                                  color:
+                                      Theme.of(context).colorScheme.onSecondary,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 );
               },
-            ),
-          )
-        ],
+            );
+          } else {
+            return Center(
+              child: Text(
+                'is not found ${snapshot.error}',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+              ),
+            );
+          }
+        },
       ),
     );
   }
@@ -267,7 +272,7 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
       margin: EdgeInsets.only(
           left: constraints.maxWidth * 0.025,
           bottom: constraints.maxWidth * 0.02),
-      padding: EdgeInsets.only(left: 20),
+      padding: const EdgeInsets.only(left: 20),
       decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.secondary,
           borderRadius: BorderRadius.circular(5.5)),

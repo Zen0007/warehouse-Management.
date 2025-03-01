@@ -20,9 +20,6 @@ class ListCategoryUser extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final frequentRequest = Provider.of<WebsocketHelper>(context, listen: true);
-    frequentRequest.getAllKeyCategory();
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,

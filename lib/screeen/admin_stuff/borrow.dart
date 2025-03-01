@@ -15,9 +15,6 @@ class BorrowUserPage extends StatefulWidget {
 class _BorrowUserPageState extends State<BorrowUserPage> {
   @override
   Widget build(BuildContext context) {
-    final secondaryWs = Provider.of<WebsocketHelper>(context, listen: true);
-    secondaryWs.getDataBorrow();
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,

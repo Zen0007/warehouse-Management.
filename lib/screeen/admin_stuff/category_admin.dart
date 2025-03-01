@@ -14,9 +14,6 @@ class CategoryAdmin extends StatefulWidget {
 class _CategoryAdminState extends State<CategoryAdmin> {
   @override
   Widget build(BuildContext context) {
-    final secondaryWs = Provider.of<WebsocketHelper>(context, listen: true);
-    secondaryWs.getDataAllCollection();
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,

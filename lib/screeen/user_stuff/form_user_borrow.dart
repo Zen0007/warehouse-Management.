@@ -91,12 +91,12 @@ class _FormForUserState extends State<FormForUser> {
       }
       final listChoiceUser =
           await StoredUserChoice().getListFromSharedPreferences();
-      debugPrint("$listChoiceUser form user---------------------------");
+      final removeSpace = name.replaceAll(" ", "");
       wsHelper.sendMessage(
         {
           "endpoint": "borrowing",
           "data": {
-            "name": name,
+            "name": removeSpace,
             "class": kelas,
             "nisn": nisn,
             "nameTeacher": nameGuru,
@@ -131,7 +131,7 @@ class _FormForUserState extends State<FormForUser> {
               key: 'dataItemBorrowUser',
               value: json.encode(
                 {
-                  "name": name,
+                  "name": removeSpace,
                   "class": kelas,
                   "nisn": nisn,
                   "nameTeacher": nameGuru,
@@ -141,7 +141,7 @@ class _FormForUserState extends State<FormForUser> {
                 },
               ),
             );
-            await storage.write(key: "nameUserHasBorrow", value: name);
+            await storage.write(key: "nameUserHasBorrow", value: removeSpace);
             await storage.delete(key: "choice");
 
             Future.delayed(

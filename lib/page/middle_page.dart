@@ -14,11 +14,11 @@ class MiddlePage extends StatefulWidget {
 class _MiddlePageState extends State<MiddlePage> {
   @override
   Widget build(BuildContext context) {
-    final secondaryWs = Provider.of<AuthService>(context, listen: true);
+    final authService = Provider.of<AuthService>(context, listen: true);
 
     return Scaffold(
       body: StreamBuilder(
-        stream: secondaryWs.userHasBorrow(),
+        stream: authService.userHasBorrow(),
         builder: (context, snapshot) {
           print("${snapshot.hasData} data middle");
           if (snapshot.data != null) {

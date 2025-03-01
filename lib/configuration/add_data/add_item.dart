@@ -107,7 +107,7 @@ class _AddItemState extends State<AddItem> {
             "category": valueDropDown,
             "name": name,
             "label": label,
-            "image": image,
+            "image": image ?? [],
           },
         },
       );
@@ -210,9 +210,6 @@ class _AddItemState extends State<AddItem> {
 
   @override
   Widget build(BuildContext context) {
-    final frequentRequest = Provider.of<WebsocketHelper>(context, listen: true);
-    frequentRequest.getAllKeyCategory();
-
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: LayoutBuilder(

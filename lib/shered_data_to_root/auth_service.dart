@@ -27,7 +27,7 @@ class AuthService with ChangeNotifier {
     final List<int> listInt =
         List<int>.from(listItemUser['imageSelfie'] as List);
     final Uint8List uint8list = Uint8List.fromList(listInt);
-    print(listItemUser);
+
     yield BorrowUser.from(listItemUser, uint8list);
   }
 
@@ -77,24 +77,24 @@ class AuthService with ChangeNotifier {
     }
   }
 
-  void getNewStatusUser() async {
-    final nameUserHasBorrow = await storage.read(key: "nameUserHasBorrow");
-    Timer? timer;
-    timer = Timer.periodic(
-      Duration(seconds: 10),
-      (_) {
-        wsHelper.sendMessage(
-          {
-            "endpoint": "hasBorrow",
-            "data": {
-              "name": nameUserHasBorrow ?? '',
-            }
-          },
-        );
-        timer?.cancel();
-      },
-    );
-  }
+  // void getNewStatusUser() async {
+  //   final nameUserHasBorrow = await storage.read(key: "nameUserHasBorrow");
+  //   Timer? timer;
+  //   timer = Timer.periodic(
+  //     Duration(seconds: 10),
+  //     (_) {
+  //       wsHelper.sendMessage(
+  //         {
+  //           "endpoint": "hasBorrow",
+  //           "data": {
+  //             "name": nameUserHasBorrow ?? '',
+  //           }
+  //         },
+  //       );
+  //       timer?.cancel();
+  //     },
+  //   );
+  // }
 
   @override
   void dispose() {

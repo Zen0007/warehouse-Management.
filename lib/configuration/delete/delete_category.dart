@@ -158,8 +158,6 @@ class _AddItemState extends State<DeleteCategory> {
 
   @override
   Widget build(BuildContext context) {
-    final frequentRequest = Provider.of<WebsocketHelper>(context, listen: true);
-    frequentRequest.getAllKeyCategory();
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: LayoutBuilder(
@@ -375,7 +373,6 @@ class _AddItemState extends State<DeleteCategory> {
                 return StreamBuilder(
                   stream: wsHelper.streamKeyResult.stream,
                   builder: (context, snapshot) {
-                    print(snapshot.data);
                     if (!snapshot.hasData) {
                       return Center(
                         child: CircularProgressIndicator.adaptive(),

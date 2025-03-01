@@ -14,8 +14,6 @@ class ScreenCategoryUser extends StatefulWidget {
 class _ScreenCategoryUserState extends State<ScreenCategoryUser> {
   @override
   Widget build(BuildContext context) {
-    final frequentRequest = Provider.of<WebsocketHelper>(context, listen: true);
-    frequentRequest.getDataCategoryUser();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -107,6 +105,7 @@ class _ScreenCategoryUserState extends State<ScreenCategoryUser> {
                         return CardItemUser(
                           data: index[indexs],
                           imageSize: sizeImage,
+                          size: constraints,
                         );
                       },
                     );
