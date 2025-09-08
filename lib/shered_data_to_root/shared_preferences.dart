@@ -1,17 +1,18 @@
 import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StoredUserChoice {
-  final storage = FlutterSecureStorage();
-
   Future<void> saveListToSharedPreferences(
       List<Map<String, dynamic>> choise) async {
+    final prefs = await SharedPreferences.getInstance();
     String jsonString = json.encode(choise);
-    await storage.write(key: "choice", value: jsonString);
+    prefs.setString("choice", jsonString);
   }
 
   Future<List<Map<String, dynamic>>> getListFromSharedPreferences() async {
-    String? jsonString = await storage.read(key: "choice");
+    final prefs = await SharedPreferences.getInstance();
+    String? jsonString = prefs.getString("choice");
     if (jsonString != null) {
       final List jsonList = json.decode(jsonString);
       return jsonList.map((item) => item as Map<String, dynamic>).toList();

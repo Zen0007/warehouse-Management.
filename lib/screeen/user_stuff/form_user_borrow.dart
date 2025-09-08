@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:werehouse_inventory/screeen/user_stuff/user_has_borrow.dart';
 import 'package:werehouse_inventory/shered_data_to_root/shared_preferences.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
@@ -26,7 +26,6 @@ class _FormForUserState extends State<FormForUser> {
   bool obscureText = true;
   Uint8List? image;
   final pickerImageFromGalery = ImagePicker();
-  final storage = FlutterSecureStorage();
 
   void toggleObscure() {
     setState(() {
@@ -56,7 +55,7 @@ class _FormForUserState extends State<FormForUser> {
   void sumbit(BuildContext context, WebsocketHelper wsHelper) async {
     try {
       final validate = _fromKey.currentState!.validate();
-
+      final prefs = await SharedPreferences.getInstance();
       if (!validate) {
         await Future.delayed(
           Duration(seconds: 5),
@@ -127,9 +126,9 @@ class _FormForUserState extends State<FormForUser> {
             );
             return;
           } else if (data.containsKey('message')) {
-            await storage.write(
-              key: 'dataItemBorrowUser',
-              value: json.encode(
+            prefs.setString(
+              'dataItemBorrowUser',
+              json.encode(
                 {
                   "name": removeSpace,
                   "class": kelas,
@@ -141,8 +140,8 @@ class _FormForUserState extends State<FormForUser> {
                 },
               ),
             );
-            await storage.write(key: "nameUserHasBorrow", value: removeSpace);
-            await storage.delete(key: "choice");
+            prefs.setString("nameUserHasBorrow", removeSpace);
+            prefs.remove("choice");
 
             Future.delayed(
               Duration(seconds: 1),

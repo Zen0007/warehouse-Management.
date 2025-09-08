@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:werehouse_inventory/page/first_screen.dart';
 import 'package:werehouse_inventory/screeen/admin_stuff/borrow.dart';
 import 'package:werehouse_inventory/screeen/admin_stuff/grantend_user.dart';
@@ -18,7 +18,6 @@ class HomePage extends StatelessWidget {
   });
 
   final GlobalKey<ScaffoldState> drawer = GlobalKey<ScaffoldState>();
-  final storage = FlutterSecureStorage();
 
   void selectCategory(BuildContext context, String title) {
     Navigator.of(context).push(
@@ -31,7 +30,8 @@ class HomePage extends StatelessWidget {
   }
 
   Future<dynamic> detailAdmin(BuildContext context) async {
-    final String? name = await storage.read(key: "adminName");
+    final prefs = await SharedPreferences.getInstance();
+    final String? name = prefs.getString("adminName");
 
     if (!context.mounted) {
       return;
@@ -400,10 +400,10 @@ class HomePage extends StatelessWidget {
                                 ),
                                 (route) => false,
                               );
-
-                              await storage.delete(key: "token");
-                              debugPrint(
-                                  '${await storage.read(key: 'token')}  token');
+                              final prefs =
+                                  await SharedPreferences.getInstance();
+                              prefs.remove("token");
+                              debugPrint('${prefs.remove("token")}  token');
                             },
                             child: Text(
                               'logout',

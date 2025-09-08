@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:werehouse_inventory/data type/borrow_user.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
@@ -9,7 +9,6 @@ class CardPending extends StatelessWidget {
 
   final BorrowUser data;
   final double imageSize;
-  final storage = FlutterSecureStorage();
 
   @override
   Widget build(BuildContext context) {
@@ -141,7 +140,8 @@ class CardPending extends StatelessWidget {
   }
 
   void warning(BuildContext context, WebsocketHelper wsHelper) async {
-    final admin = await storage.read(key: 'adminName');
+    final prefs = await SharedPreferences.getInstance();
+    final admin = prefs.getString('adminName');
     if (!context.mounted) {
       return;
     }

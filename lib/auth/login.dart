@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:werehouse_inventory/page/home_page.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -62,6 +62,7 @@ class _LoginState extends State<Login> {
       );
 
       await for (var data in webSocket.responseLogin()) {
+        debugPrint("logs login $data");
         if (data.containsKey("warning")) {
           final warning = data['warning'];
           if (!context.mounted) return;
@@ -75,10 +76,10 @@ class _LoginState extends State<Login> {
           debugPrint("$warning waring");
           return;
         } else if (data.containsKey('message')) {
-          final storage = FlutterSecureStorage();
+          final prefs = await SharedPreferences.getInstance();
           final token = data['message'];
-          await storage.write(key: 'token', value: token);
-          await storage.write(key: "adminName", value: data['adminName']);
+          await prefs.setString('token', token);
+          await prefs.setString("adminName", data['adminName']);
 
           if (!context.mounted) return;
           Navigator.push(

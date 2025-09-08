@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:werehouse_inventory/data%20type/borrow_user.dart';
 import 'package:werehouse_inventory/screeen/user_stuff/each_category.dart';
 import 'package:werehouse_inventory/shered_data_to_root/auth_service.dart';
@@ -14,8 +14,6 @@ class UserHasBorrows extends StatefulWidget {
 }
 
 class _UserHasBorrowsState extends State<UserHasBorrows> {
-  final storage = FlutterSecureStorage();
-
   void selectCategory(BuildContext context, String title) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -28,7 +26,8 @@ class _UserHasBorrowsState extends State<UserHasBorrows> {
 
   void sumbit(BuildContext context, WebsocketHelper wsHelper) async {
     try {
-      final getToken = await storage.read(key: 'hasBorrow');
+      final prefs = await SharedPreferences.getInstance();
+      final getToken = prefs.getString('hasBorrow');
       wsHelper.sendMessage(
         {
           "endpoint": "waitPermision",

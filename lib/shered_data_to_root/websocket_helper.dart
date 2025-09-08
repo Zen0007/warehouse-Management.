@@ -1,11 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:werehouse_inventory/data%20type/index.dart';
 import 'package:werehouse_inventory/data type/borrow_user.dart';
-
 import 'package:werehouse_inventory/data%20type/key_category_list.dart';
 
 class WebsocketHelper with ChangeNotifier {
@@ -17,7 +16,6 @@ class WebsocketHelper with ChangeNotifier {
   Timer? _reconnectTimer;
   WebSocketChannel? channel;
   bool isConnected = false;
-  final storage = FlutterSecureStorage();
 
   final Duration _reconnectDelay = Duration(seconds: 5);
   final streamControllerAll = StreamController<Map>.broadcast();
@@ -153,13 +151,13 @@ class WebsocketHelper with ChangeNotifier {
             streamCollectionAvaileble.sink.add(streamData['message']);
             break;
           case "HASBORROW":
-            final String? nameUser = await storage.read(
-              key: "nameUserHasBorrow",
-            );
+            final prefs = await SharedPreferences.getInstance();
+            final String? nameUser = prefs.getString("nameUserHasBorrow");
+
             if (streamData['message'].containsKey(nameUser)) {
-              storage.write(
-                key: 'dataItemBorrowUser',
-                value: streamData['message'][nameUser],
+              prefs.setString(
+                'dataItemBorrowUser',
+                streamData['message'][nameUser],
               );
             }
             notifyListeners();

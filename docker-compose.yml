@@ -1,0 +1,21 @@
+
+services:
+  ws-server:
+    image: ws-service
+    networks:
+      - "getaway"
+    ports:
+      - "8080:8080"
+
+  flutter-web:
+    build: .
+    networks:
+      - "getaway"
+    ports:
+      - "80:80"
+    depends_on:
+      - "ws-server"
+    
+networks:
+  getaway:
+    driver: bridge
