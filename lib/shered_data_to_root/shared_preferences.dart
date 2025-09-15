@@ -5,25 +5,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 class StoredUserChoice {
   Future<void> saveListToSharedPreferences(
       List<Map<String, dynamic>> choise) async {
-    final SharedPreferences pref = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
     String jsonString = json.encode(choise);
-    await pref.setString("choice", jsonString);
+    prefs.setString("choice", jsonString);
   }
 
   Future<List<Map<String, dynamic>>> getListFromSharedPreferences() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
     String? jsonString = prefs.getString("choice");
     if (jsonString != null) {
       final List jsonList = json.decode(jsonString);
       return jsonList.map((item) => item as Map<String, dynamic>).toList();
     }
     return [];
-  }
-
-  Future<void> delete() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final remove = await prefs.remove("choice");
-    print("$remove remove");
   }
 
   Future<void> addNewMapToSharedPreferences(

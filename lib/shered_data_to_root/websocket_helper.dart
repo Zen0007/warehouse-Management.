@@ -1,136 +1,269 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:werehouse_inventory/dummy_data/decode.dart';
+import 'package:werehouse_inventory/data%20type/index.dart';
+import 'package:werehouse_inventory/data type/borrow_user.dart';
+import 'package:werehouse_inventory/data%20type/key_category_list.dart';
 
 class WebsocketHelper with ChangeNotifier {
-  final WebSocketChannel _channel =
-      WebSocketChannel.connect(Uri.parse('ws://127.0.0.1:8080/ws'));
-  final StreamController<Map> streamController =
-      StreamController<Map>.broadcast();
-
-  WebsocketHelper() {
+  WebsocketHelper(this.channel) {
     connect();
   }
 
-  void getDataBorrow() {
-    _channel.sink.add(json.encode({"endpoint": "getDataBorrow"}));
+  Stream? broadCastStream;
+  Timer? _reconnectTimer;
+  WebSocketChannel? channel;
+  bool isConnected = false;
+
+  final Duration _reconnectDelay = Duration(seconds: 5);
+  final streamControllerAll = StreamController<Map>.broadcast();
+  final streamCollectionAdmin = StreamController<List>.broadcast();
+  final streamCollectionAvaileble = StreamController<List>.broadcast();
+  final streamKeyResult = StreamController<List>.broadcast();
+  final streamBorrow = StreamController<List>.broadcast();
+  final streamPending = StreamController<List>.broadcast();
+  final streamGranted = StreamController<List>.broadcast();
+
+  final addNewData = StreamController<Map>.broadcast();
+  final deleteCollection = StreamController<Map>.broadcast();
+  final deleteItem = StreamController<Map>.broadcast();
+  final userApproveReturn = StreamController<Map>.broadcast();
+  final verifikasiHasLogin = StreamController<Map>.broadcast();
+  final checkUserHasBorrows = StreamController<String>.broadcast();
+
+  @override
+  void dispose() {
+    channel?.sink.close();
+    streamControllerAll.close();
+    streamCollectionAdmin.close();
+    streamCollectionAvaileble.close();
+    streamKeyResult.close();
+    streamBorrow.close();
+    streamPending.close();
+    streamGranted.close();
+
+    addNewData.close();
+    deleteCollection.close();
+    deleteItem.close();
+    userApproveReturn.close();
+    verifikasiHasLogin.close();
+    checkUserHasBorrows.close();
+    _reconnectTimer!.cancel();
+    super.dispose();
   }
 
-  void getDataCategoryUser() {
-    _channel.sink.add(json.encode({"endpoint": "getDataCollectionAvaileble"}));
+  static Map jsonDecodes(dynamic jsons) {
+    return json.decode(jsons);
   }
 
-  void getDataAllCollection() {
-    _channel.sink.add(json.encode({"endpoint": "getDataAllCollection"}));
-  }
-
-  void getDataPending() {
-    _channel.sink.add(json.encode({"endpoint": "getDataPending"}));
-  }
-
-  void getAllKeyCategory() {
-    _channel.sink.add(json.encode({"endpoint": "getAllKeyCategory"}));
-  }
-
-  void getDataGranted() {
-    _channel.sink.add(json.encode({"endpoint": "getDataGranted"}));
-  }
-
-  void connect() async {
-    _channel.stream.listen(
-      (message) {
-        final streamData = json.decode(message);
-        notifyListeners();
-
-        streamController.sink.add(streamData);
-      },
-      onDone: () {
-        print("losset connect web socket");
-        reconnet();
-      },
-      onError: (e) {
-        print(e);
-        reconnet();
-      },
-    );
+  void closeWebSocket() {
+    if (channel != null) {
+      channel?.sink.close();
+      channel = null; // Clear the WebSocketChannel reference
+      _reconnectTimer?.cancel();
+      _reconnectTimer = null;
+      broadCastStream = null;
+      isConnected = false;
+      notifyListeners();
+    }
+    notifyListeners();
   }
 
   void reconnet() async {
-    await Future.delayed(Duration(seconds: 5));
-    connect();
+    closeWebSocket();
+    try {
+      if (_reconnectTimer == null || !_reconnectTimer!.isActive) {
+        _reconnectTimer = Timer(
+          _reconnectDelay,
+          () {
+            print("attempting to reconnect .....");
+            connect();
+            notifyListeners();
+          },
+        );
+      }
+    } catch (e) {
+      if (_reconnectTimer == null || !_reconnectTimer!.isActive) {
+        _reconnectTimer = Timer(
+          _reconnectDelay,
+          () {
+            print("attempting to reconnect .....");
+            connect();
+            notifyListeners();
+          },
+        );
+      }
+      print(e);
+    }
   }
 
-  void sendMessage(Map<String, dynamic> message) {
-    _channel.sink.add(
-      json.encode(message),
+  void processConnectionServer(Stream? connections) async {
+    connections?.listen(
+      (message) async {
+        // process code in another thread
+        final streamData = await compute(jsonDecodes, message);
+
+        switch (streamData['endpoint']) {
+          case 'GETDATAALLCATEGORY':
+            notifyListeners();
+            streamCollectionAdmin.sink.add(streamData['message']);
+            break;
+          case "GETDATAALLKEYCATEGORY":
+            notifyListeners();
+            streamKeyResult.sink.add(streamData['message']);
+            break;
+          case "ADDNEWITEM":
+            notifyListeners();
+            addNewData.sink.add(streamData);
+            break;
+          case "DELETECATEGORY":
+            notifyListeners();
+            deleteCollection.sink.add(streamData);
+            break;
+          case "DELETEITEM":
+            notifyListeners();
+            deleteItem.sink.add(streamData);
+            break;
+          case "GETDATABORROW":
+            notifyListeners();
+            streamBorrow.sink.add(streamData['message']);
+            break;
+          case "GETDATAGRANTED":
+            notifyListeners();
+            streamGranted.sink.add(streamData['message']);
+            break;
+          case "GETDATAPENDING":
+            notifyListeners();
+            streamPending.sink.add(streamData['message']);
+            break;
+          case "GRANTED":
+            notifyListeners();
+            userApproveReturn.sink.add(streamData);
+            break;
+          case "VERIFIKASI":
+            notifyListeners();
+            verifikasiHasLogin.sink.add(streamData);
+            break;
+          case "GETDATACATEGORYAVAILEBLE":
+            notifyListeners();
+            streamCollectionAvaileble.sink.add(streamData['message']);
+            break;
+          case "HASBORROW":
+            final prefs = await SharedPreferences.getInstance();
+            final String? nameUser = prefs.getString("nameUserHasBorrow");
+
+            if (streamData['message'].containsKey(nameUser)) {
+              prefs.setString(
+                'dataItemBorrowUser',
+                streamData['message'][nameUser],
+              );
+            }
+            notifyListeners();
+            break;
+          case "CHECKUSER":
+            checkUserHasBorrows.sink.add(streamData['message']);
+            notifyListeners();
+            break;
+          default:
+            notifyListeners();
+            streamControllerAll.sink.add(streamData);
+            break;
+        }
+      },
+      onDone: () {
+        print('connection close ');
+
+        isConnected = false;
+        reconnet();
+        notifyListeners();
+      },
+      onError: (e) {
+        print("$e  co");
+
+        isConnected = false;
+        reconnet();
+        notifyListeners();
+      },
     );
   }
 
-  Stream<String> verifikasi() async* {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final getToken = prefs.getString('token');
-
+  void connect() async {
     try {
-      DateTime now = DateTime.now();
-      DateTime lastRequest = DateTime.parse(
-        prefs.getString('lastRequest') ??
-            now.subtract(Duration(hours: 1)).toIso8601String(),
+      broadCastStream = channel?.stream.asBroadcastStream();
+
+      await compute(
+        processConnectionServer,
+        broadCastStream,
       );
+      isConnected = true;
+      notifyListeners();
+    } catch (e, s) {
+      debugPrint("$e");
+      debugPrint("$s");
 
-      debugPrint("$getToken token t");
-      debugPrint("${prefs.getString('lastRequest')} exp");
-
-      if (now.difference(lastRequest).inHours >= 1) {
-        _channel.sink.add(json.encode(
-          {
-            "endpoint": "verifikasi",
-            "data": {
-              "token": getToken,
-            }
-          },
-        ));
-
-        prefs.setString('lastRequest', now.toIso8601String());
-      }
-
-      DateTime nextRequest = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        now.hour + 1,
-      );
-      Duration delayed = nextRequest.difference(now);
-      Timer(
-        delayed,
-        () => _channel.sink.add(json.encode(
-          {
-            "endpoint": "verifikasi",
-            "data": {
-              "token": getToken,
-            }
-          },
-        )),
-      );
-
-      await for (final status in streamController.stream) {
-        if (status['endpoint'] == "VERIFIKASI") {
-          yield status['status'];
-        }
-      }
-    } catch (e) {
-      debugPrint("$e error in verifikasi");
+      isConnected = false;
+      reconnet();
+      notifyListeners();
     }
+  }
+
+  //sent once Request
+  void getDataBorrowOnce() {
+    channel?.sink.add(json.encode({"endpoint": "getDataBorrowOnce"}));
+    notifyListeners();
+  }
+
+  //sent once Request
+  void getDataCategoryUserOnce() {
+    channel?.sink
+        .add(json.encode({"endpoint": "getDataCollectionAvailebleOnce"}));
+    notifyListeners();
+  }
+
+  //sent once Request
+  void getDataAllCollectionOnce() {
+    channel?.sink.add(json.encode({"endpoint": "getDataAllCollectionOnce"}));
+    notifyListeners();
+  }
+
+  //sent once Request
+  void getDataPendingOnce() {
+    channel?.sink.add(json.encode({"endpoint": "getDataPendingOnce"}));
+    notifyListeners();
+  }
+
+  //sent once Request
+  void getAllKeyCategoryOnce() {
+    channel?.sink.add(json.encode({"endpoint": "getAllKeyCategoryOnce"}));
+    notifyListeners();
+  }
+
+  //sent once Request
+  void getDataGrantedOnce() {
+    channel?.sink.add(json.encode({"endpoint": "getDataGrantedOnce"}));
+    notifyListeners();
+  }
+
+  Future<Map> message() async {
+    await Future.delayed(Duration(seconds: 10));
+    return {"message": "respone"};
+  }
+
+  void sendMessage(Map<String, dynamic> message) {
+    channel?.sink.add(
+      json.encode(message),
+    );
   }
 
   Stream<Map> responseLogin() async* {
     Map data = {};
 
-    await for (var map in streamController.stream) {
+    await for (var map in streamControllerAll.stream) {
       if (map['endpoint'] == 'LOGIN') {
         data.addAll(map);
+        notifyListeners();
         yield data;
       }
     }
@@ -139,153 +272,154 @@ class WebsocketHelper with ChangeNotifier {
   Stream<Map> responseRegister() async* {
     Map data = {};
 
-    await for (var map in streamController.stream) {
+    await for (var map in streamControllerAll.stream) {
       if (map['endpoint'] == 'RIGISTER') {
         data.addAll(map);
+        notifyListeners();
         yield data;
       }
     }
   }
 
-  Stream<List<BorrowUser>> borrowUser() async* {
-    await for (var data in streamController.stream) {
-      if (data['endpoint'] == 'GETDATABORROW') {
-        final List<BorrowUser> list = [];
-
-        if (data['message'].isEmpty) {
-          yield [];
-        }
-
-        for (var i = 0; i < data['message'].length; i++) {
-          final Map dataMessage = data['message'][i];
-          for (var data in dataMessage.values) {
+  @Deprecated("this code is not proper so must to change ")
+  Stream<BorrowUser> userHasBorrowss() async* {
+    try {
+      await for (final status in streamControllerAll.stream) {
+        if (status['endpoint'] == "HASBORROW") {
+          for (var data in status['message'].values) {
             if (data is Map) {
-              final user = BorrowUser.from(data);
-              list.add(user);
+              final List<int> listInt =
+                  List<int>.from(data['imageSelfie'] as List);
+              final Uint8List uint8list = Uint8List.fromList(listInt);
+
+              final user = BorrowUser.from(data, uint8list);
+              notifyListeners();
+              yield user;
             }
           }
         }
-        print(list);
-        yield list;
       }
+    } catch (e, s) {
+      print(e);
+      debugPrint("$s strackTrace");
     }
   }
 
-  Stream<List<BorrowUser>> pendingData() async* {
-    await for (var data in streamController.stream) {
-      if (data['endpoint'] == 'GETDATAPENDING') {
-        final List<BorrowUser> list = [];
+  BorrowUser? processUserHasBorrow(Map status) {
+    BorrowUser? user;
+    for (var data in status.values) {
+      if (data is Map) {
+        final List<int> listInt = List<int>.from(data['imageSelfie'] as List);
+        final Uint8List uint8list = Uint8List.fromList(listInt);
 
-        if (data['message'].isEmpty) {
-          yield [];
-        }
-
-        for (var i = 0; i < data['message'].length; i++) {
-          final Map dataMessage = data['message'][i];
-          for (var data in dataMessage.values) {
-            if (data is Map) {
-              final user = BorrowUser.from(data);
-              list.add(user);
-            }
-          }
-        }
-
-        yield list;
+        user = BorrowUser.from(data, uint8list);
+        return user;
       }
     }
+    return user;
   }
 
-  Stream<List<BorrowUser>> userHasReturnItems() async* {
-    await for (var data in streamController.stream) {
-      if (data['endpoint'] == 'GETDATAGRANTED') {
-        final List<BorrowUser> list = [];
+  List<BorrowUser> processPending(List data) {
+    final List<BorrowUser> list = [];
 
-        if (data['message'].isEmpty) {
-          yield [];
+    for (var i = 0; i < data.length; i++) {
+      final Map dataMessage = data[i];
+      for (var data in dataMessage.values) {
+        if (data is Map) {
+          final List<int> listInt = List<int>.from(data['imageSelfie'] as List);
+          final Uint8List uint8list = Uint8List.fromList(listInt);
+
+          final user = BorrowUser.from(data, uint8list);
+          list.add(user);
         }
-        for (var i = 0; i < data['message'].length; i++) {
-          final Map dataMessage = data['message'][i];
-
-          for (var data in dataMessage.values) {
-            if (data is Map) {
-              final user = BorrowUser.from(data);
-              list.add(user);
-            }
-          }
-        }
-
-        yield list;
       }
     }
+    return list;
   }
 
-  Future<List<KeyCategoryList>> keyCategory() async {
-    List<KeyCategoryList> key = [];
+  List<BorrowUser> processGranted(List data) {
+    final List<BorrowUser> list = [];
 
-    await for (var data in streamController.stream) {
-      if (data['endpoint'] == "GETDATAALLKEYCATEGORY") {
-        for (var i = 0; i < data['message'].length; i++) {
-          final keyCategory = KeyCategoryList.fromJson(data['message'][i]);
-          key.add(keyCategory);
+    for (var i = 0; i < data.length; i++) {
+      final Map dataMessage = data[i];
+
+      for (var data in dataMessage.values) {
+        if (data is Map) {
+          final List<int> listInt = List<int>.from(data['imageSelfie'] as List);
+          final Uint8List uint8list = Uint8List.fromList(listInt);
+
+          final user = BorrowUser.from(data, uint8list);
+          list.add(user);
         }
-        return key;
       }
     }
-    return [];
+
+    return list;
   }
 
-  Stream<List<Index>> indexCategoryForUser(String title) async* {
-    List<Index> data = [];
-
-    await for (var index in streamController.stream) {
-      if (index['endpoint'] == "GETDATACATEGORYAVAILEBLE") {
-        if (index['message'].isEmpty) {
-          yield [];
-        }
-
-        for (var i = 0; i < index['message'].length; i++) {
-          if (index['message'][i][title] != null) {
-            print("is empty");
-            for (var entry in index['message'][i][title].entries) {
-              final index = Index.fromJson(entry.value, entry.key, title);
-              data.add(index);
-            }
-          }
-        }
-
-        yield data;
-      }
-    }
-  }
-
-  Stream<List<Index>> indexCategoryForAdmin(String title) async* {
+  List<Index>? processIndex(String title, List index) {
     final List<Index> data = [];
 
-    await for (var index in streamController.stream) {
-      if (index['endpoint'] == "GETDATAALLCATEGORY") {
-        if (index['message'].isEmpty) {
-          yield [];
+    for (var i = 0; i < index.length; i++) {
+      if (index[i][title] != null) {
+        for (var entry in index[i][title].entries) {
+          final List<int> listInt =
+              List<int>.from(entry.value['image'] as List);
+          final Uint8List uint8list = Uint8List.fromList(listInt);
+
+          final index =
+              Index.fromJson(entry.value, entry.key, title, uint8list);
+          data.add(index);
         }
 
-        for (var i = 0; i < index['message'].length; i++) {
-          if (index['message'][i][title] != null) {
-            for (var entry in index['message'][i][title].entries) {
-              final index = Index.fromJson(entry.value, entry.key, title);
-              data.add(index);
-            }
-          }
-        }
-
-        yield data;
+        return data;
       }
     }
+
+    return data;
   }
 
-  void freeGrantedIfPastOneYear() {}
+  List<Index> processForUser(List index, String title) {
+    final List<Index> data = [];
+    for (var i = 0; i < index.length; i++) {
+      if (index[i][title] != null) {
+        for (var entry in index[i][title].entries) {
+          final listInt = List<int>.from(entry.value['image'] as List);
+          final uint8list = Uint8List.fromList(listInt);
+          final index =
+              Index.fromJson(entry.value, entry.key, title, uint8list);
+          data.add(index);
+        }
 
-  @override
-  void dispose() {
-    _channel.sink.close();
-    super.dispose();
+        return data;
+      }
+    }
+    return data;
+  }
+
+  List<BorrowUser> processBorrow(List data) {
+    List<BorrowUser> list = [];
+    for (var i = 0; i < data.length; i++) {
+      final Map dataMessage = data[i];
+      for (var data in dataMessage.values) {
+        if (data is Map) {
+          final List<int> listInt = List<int>.from(data['imageSelfie'] as List);
+          final Uint8List uint8list = Uint8List.fromList(listInt);
+
+          final user = BorrowUser.from(data, uint8list);
+          list.add(user);
+        }
+      }
+    }
+    return list;
+  }
+
+  List<KeyCategoryList> processKey(List data) {
+    List<KeyCategoryList> key = [];
+    for (var i = 0; i < data.length; i++) {
+      final keyCategory = KeyCategoryList.fromJson(data[i]);
+      key.add(keyCategory);
+    }
+    return key;
   }
 }

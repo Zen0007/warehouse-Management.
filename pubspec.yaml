@@ -38,12 +38,10 @@ dependencies:
   cupertino_icons: ^1.0.8
   web_socket_channel: ^3.0.1
   provider: ^6.1.2
-  shared_preferences: ^2.3.3
-  image_picker_for_web: ^3.0.6
+  shared_preferences: ^2.5.2
   image_picker: ^1.1.2
   # not use 
-  riverpod: ^2.6.1
-  flutter_riverpod: ^2.6.1
+ 
  
 
 dev_dependencies:

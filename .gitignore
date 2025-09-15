@@ -42,6 +42,4 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-
-#file 
 /lib/view.dart

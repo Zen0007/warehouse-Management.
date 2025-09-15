@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:werehouse_inventory/dummy_data/decode.dart';
+import 'package:provider/provider.dart';
+import 'package:werehouse_inventory/data type/borrow_user.dart';
+import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class CardBorrow extends StatelessWidget {
   const CardBorrow({
@@ -13,115 +15,218 @@ class CardBorrow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => detailUser(context),
-      child: Card(
-        color: Theme.of(context).colorScheme.secondary,
-        child: Column(
-          children: [
-            Container(
-              margin: const EdgeInsets.only(
-                top: 10,
-                bottom: 8,
-              ),
-              decoration: BoxDecoration(
-                boxShadow: const [
-                  BoxShadow(
-                    // color: Theme.of(context).colorScheme.primary,
-                    blurRadius: 10,
-                    offset: Offset(0, 10),
-                  ),
-                ],
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.asset(
-                  "assets/data/black_bull.jpeg",
-                  height: imageSize * 0.65,
-                  width: imageSize * 0.8,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            const SizedBox(
-              height: 15,
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        "name",
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          fontWeight: FontWeight.bold,
+    return Card(
+      key: ValueKey(data.time),
+      color: Theme.of(context).colorScheme.secondary,
+      child: Stack(
+        children: [
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (data.imageUser.isNotEmpty)
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(
+                      top: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      boxShadow: const [
+                        BoxShadow(
+                          // color: Theme.of(context).colorScheme.primary,
+                          blurRadius: 10,
+                          offset: Offset(0, 10),
                         ),
+                      ],
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.memory(
+                        data.imageUser,
+                        height: imageSize * 0.65,
+                        width: imageSize * 0.8,
+                        fit: BoxFit.cover,
                       ),
-                      Text(
-                        "kelas",
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        "guru",
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        "nisn",
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        "${data.nameUser}",
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        "${data.nameTeacher}",
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        "${data.classUser}",
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          fontWeight: FontWeight.w300,
-                        ),
-                      ),
-                      Text(
-                        "${data.nisn}",
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 )
-              ],
+              else
+                Center(
+                  child: Container(
+                    height: imageSize * 0.65,
+                    width: imageSize * 0.8,
+                    margin: const EdgeInsets.only(
+                      top: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.image_not_supported_outlined,
+                        size: 50,
+                      ),
+                    ),
+                  ),
+                ),
+              const SizedBox(
+                height: 15,
+              ),
+              Text(
+                "${data.nameUser}",
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Text(
+                "${data.nameTeacher}",
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Text(
+                "${data.classUser}",
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontWeight: FontWeight.w300,
+                ),
+              ),
+              Text(
+                "${data.nisn}",
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+              ),
+              Text(
+                "${data.status}",
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+              ),
+              if (data.admin!.isNotEmpty)
+                Text(
+                  "${data.admin}",
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+            ],
+          ),
+          Positioned(
+            right: 5,
+            bottom: 10,
+            child: ElevatedButton(
+              onPressed: () {
+                detailUser(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+              ),
+              child: Text(
+                "detail",
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.surface,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
             ),
-          ],
+          ),
+          Positioned(
+            right: 1.5,
+            top: 0.5,
+            child: Consumer<WebsocketHelper>(
+              builder: (context, wsHelper, _) {
+                return InkWell(
+                  child: Icon(
+                    Icons.backup,
+                    color: const Color.fromARGB(255, 253, 253, 253),
+                    size: 40,
+                  ),
+                  onTap: () {
+                    wsHelper.sendMessage(
+                      {
+                        "endpoint": "waitPermision",
+                        'data': {
+                          "name": data.nameUser ?? '',
+                        }
+                      },
+                    );
+                    messageResponseServer(context, wsHelper);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void messageResponseServer(
+      BuildContext context, WebsocketHelper wsHelper) async {
+    await for (final message in wsHelper.streamControllerAll.stream) {
+      if (message['endpoint'] == "WAITPERMISION") {
+        if (message.containsKey('message')) {
+          if (!context.mounted) return;
+          messages(
+            context,
+            true,
+            message['message'],
+            Theme.of(context).colorScheme.surface,
+          );
+          return;
+        } else {
+          if (!context.mounted) return;
+          messages(
+            context,
+            true,
+            message['warning'],
+            Theme.of(context).colorScheme.onError,
+          );
+        }
+      }
+    }
+  }
+
+  Future<dynamic> messages(BuildContext context, bool isMessage,
+      String response, Color backgroundColor) {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog.adaptive(
+        backgroundColor: backgroundColor,
+        title: Text(
+          isMessage ? "MESSAGE" : "WARNING",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
         ),
+        content: Text(
+          response,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        actions: [
+          OutlinedButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text(
+              "Yes",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -160,6 +265,14 @@ class CardBorrow extends StatelessWidget {
                 ),
               ),
             ),
+            if (data.time != null)
+              Text(
+                data.time!.substring(0, 19),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontSize: 10,
+                ),
+              ),
           ],
         ),
         actions: [

@@ -1,114 +1,148 @@
 import 'package:flutter/material.dart';
-import 'package:werehouse_inventory/dummy_data/decode.dart';
-import 'package:werehouse_inventory/shered_data_to_root/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:werehouse_inventory/data%20type/index.dart';
+import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class CardItem extends StatelessWidget {
   const CardItem({
     super.key,
     required this.data,
     required this.imageSize,
-  }) : isUser = false;
-
-  const CardItem.forUser({
-    super.key,
-    required this.data,
-    required this.imageSize,
-    required this.isUser,
   });
 
   final Index data;
   final double imageSize;
-  final bool isUser;
 
-  Future<void> store(
-    String category,
-    String index,
-    String name,
-    String label,
-  ) async {
-    // await StoredUserChoice().delete();
-    await StoredUserChoice().addNewMapToSharedPreferences(
-      {
-        "category": category,
-        "index": index,
-        "nameItem": name,
-        "label": label,
-      },
+  Future<dynamic> messages(BuildContext context, bool isMessage,
+      String response, Color backgroundColor) {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog.adaptive(
+        backgroundColor: backgroundColor,
+        title: Text(
+          isMessage ? "MESSAGE" : "WARNING",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        content: Text(
+          response,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        actions: [
+          OutlinedButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text(
+              "Yes",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
-    final dataShow = await StoredUserChoice().getListFromSharedPreferences();
+  }
 
-    debugPrint("$dataShow data");
+  void deletedItem(BuildContext context, WebsocketHelper wsHelper) async {
+    await for (final message in wsHelper.deleteItem.stream) {
+      if (message.containsKey('message')) {
+        if (!context.mounted) return;
+        messages(
+          context,
+          true,
+          message['message'],
+          Theme.of(context).colorScheme.surface,
+        );
+        return;
+      } else {
+        if (!context.mounted) return;
+        messages(
+          context,
+          true,
+          message['warning'],
+          Theme.of(context).colorScheme.onError,
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Card(
+      key: ValueKey(data.index),
       color: Theme.of(context).colorScheme.secondary,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Stack(
         children: [
-          Container(
-            margin: const EdgeInsets.only(
-              top: 10,
-              bottom: 8,
-            ),
-            decoration: BoxDecoration(
-              boxShadow: const [
-                BoxShadow(
-                  // color: Theme.of(context).colorScheme.primary,
-                  blurRadius: 10,
-                  offset: Offset(0, 10),
-                ),
-              ],
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.asset(
-                "assets/data/black_bull.jpeg",
-                height: imageSize * 0.65,
-                width: imageSize * 0.8,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          const SizedBox(
-            height: 10,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                "name :",
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
+              if (data.image.isNotEmpty)
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(
+                      top: 10,
+                      bottom: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      boxShadow: const [
+                        BoxShadow(
+                          // color: Theme.of(context).colorScheme.primary,
+                          blurRadius: 10,
+                          offset: Offset(0, 10),
+                        ),
+                      ],
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.memory(
+                        data.image,
+                        height: imageSize * 0.65,
+                        width: imageSize * 0.8,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Center(
+                  child: Container(
+                    height: imageSize * 0.65,
+                    width: imageSize * 0.8,
+                    margin: const EdgeInsets.only(
+                      top: 10,
+                      bottom: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.image_not_supported_outlined,
+                        size: 50,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
               const SizedBox(
-                width: 4,
+                height: 10,
               ),
               Text(
                 data.name,
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w400,
                 ),
-              )
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Text(
-                "label   :",
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(
-                width: 4,
               ),
               Text(
                 data.label,
@@ -116,102 +150,52 @@ class CardItem extends StatelessWidget {
                   color: Theme.of(context).colorScheme.onPrimary,
                   fontWeight: FontWeight.bold,
                 ),
+              ),
+              Text(
+                data.status,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
               )
             ],
           ),
-          if (!isUser)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                Text(
-                  "status :",
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(
-                  width: 4,
-                ),
-                Text(
-                  data.status,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                )
-              ],
+          Positioned(
+            right: 5,
+            bottom: 10,
+            child: Consumer<WebsocketHelper>(
+              builder: (context, wsHelper, _) {
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        wsHelper.sendMessage({
+                          'endpoint': "deleteItem",
+                          'data': {
+                            'category': data.category,
+                            'index': data.index,
+                          }
+                        });
+
+                        deletedItem(context, wsHelper);
+                      },
+                      style: IconButton.styleFrom(
+                        backgroundColor:
+                            Theme.of(context).colorScheme.secondary,
+                      ),
+                      icon: Icon(
+                        Icons.remove_circle_outline,
+                        size: 30,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
-          Spacer(),
-          if (isUser)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 5, right: 6),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    onPressed: () => store(
-                      data.category,
-                      data.index,
-                      data.name,
-                      data.label,
-                    ),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.secondary,
-                    ),
-                    icon: Icon(
-                      Icons.add,
-                    ),
-                  ),
-                ],
-              ),
-            )
+          )
         ],
       ),
-    );
-  }
-
-// only for test so not use
-  Column columnOne(BuildContext context) {
-    return Column(
-      children: [
-        CircleAvatar(
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          radius: 50,
-          child: const CircleAvatar(
-            backgroundImage: AssetImage("assets/data/black_bull.jpeg"),
-            radius: 40,
-          ), //CircleAvatar
-        ), //CircleAvatar
-        const SizedBox(
-          height: 10,
-        ), //SizedBox
-        Text(
-          'name : ${data.name}',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onPrimary,
-            fontWeight: FontWeight.w500,
-          ), //Textstyle
-        ), //Text
-        const SizedBox(
-          height: 10,
-        ), //SizedBox
-        Text(
-          "label : ${data.label}",
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onPrimary,
-          ), //Textstyle
-        ), //Text
-        const SizedBox(
-          height: 10,
-        ), //SizedBox
-        Text(
-          "status : ${data.status}",
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onPrimary,
-          ), //Textstyle
-        ),
-      ],
     );
   }
 }

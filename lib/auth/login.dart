@@ -29,7 +29,20 @@ class _LoginState extends State<Login> {
 
   void sumbit(BuildContext context, WebsocketHelper webSocket) async {
     final validate = _fromKey.currentState!.validate();
-    if (!validate) return;
+    if (!validate) {
+      await Future.delayed(
+        Duration(seconds: 5),
+        () {
+          _fromKey.currentState!.reset();
+        },
+      );
+      setState(
+        () {
+          isLoding = false;
+        },
+      );
+      return;
+    }
     _fromKey.currentState!.save();
     try {
       setState(
@@ -42,18 +55,24 @@ class _LoginState extends State<Login> {
         {
           "endpoint": "login",
           "data": {
-            "name": name,
-            "password": password,
+            "name": name.replaceAll(' ', ''),
+            "password": password.replaceAll(' ', ''),
           },
         },
       );
 
       await for (var data in webSocket.responseLogin()) {
+        debugPrint("logs login $data");
         if (data.containsKey("warning")) {
           final warning = data['warning'];
           if (!context.mounted) return;
           alertDialog(context, warning);
 
+          setState(
+            () {
+              isLoding = false;
+            },
+          );
           debugPrint("$warning waring");
           return;
         } else if (data.containsKey('message')) {
@@ -102,17 +121,6 @@ class _LoginState extends State<Login> {
             ),
             onPressed: () {
               Navigator.pop(context);
-              Future.delayed(
-                Duration(seconds: 1),
-                () {
-                  _fromKey.currentState!.reset();
-                  setState(
-                    () {
-                      isLoding = false;
-                    },
-                  );
-                },
-              );
             },
             child: Text(
               "Yes",
@@ -307,7 +315,7 @@ class _LoginState extends State<Login> {
                     left: constraints.maxWidth * 0.05,
                   ),
                   child: Consumer<WebsocketHelper>(
-                    builder: (contex, wsHelper, child) {
+                    builder: (contex, wsHelper, _) {
                       return ElevatedButton(
                         onPressed: () => sumbit(context, wsHelper),
                         style: ElevatedButton.styleFrom(
@@ -430,8 +438,8 @@ class _LoginState extends State<Login> {
               if (isLoding)
                 Container(
                   margin: EdgeInsets.only(
-                    right: constraints.maxWidth * 0.05,
-                    left: constraints.maxWidth * 0.05,
+                    right: constraints.maxWidth * 0.12,
+                    left: constraints.maxWidth * 0.12,
                   ),
                   child: ElevatedButton(
                     onPressed: () {},
@@ -455,7 +463,7 @@ class _LoginState extends State<Login> {
                     left: constraints.maxWidth * 0.12,
                   ),
                   child: Consumer<WebsocketHelper>(
-                    builder: (contex, wsHelper, child) {
+                    builder: (contex, wsHelper, _) {
                       return ElevatedButton(
                         onPressed: () => sumbit(context, wsHelper),
                         style: ElevatedButton.styleFrom(

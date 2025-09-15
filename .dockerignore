@@ -1,0 +1,6 @@
+.git
+.pub-cache/
+.flutter-plugins
+.flutter-plugins-dependencies
+.dart-tool
+.idea
