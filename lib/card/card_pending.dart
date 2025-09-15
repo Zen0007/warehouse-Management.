@@ -5,7 +5,11 @@ import 'package:werehouse_inventory/data type/borrow_user.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class CardPending extends StatelessWidget {
-  CardPending({super.key, required this.data, required this.imageSize});
+  const CardPending({
+    super.key,
+    required this.data,
+    required this.imageSize,
+  });
 
   final BorrowUser data;
   final double imageSize;
